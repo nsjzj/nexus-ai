@@ -179,14 +179,14 @@ export default function Home() {
         }
       } catch (error) {
         if (active) setNotice(error instanceof Error
-          ? copy("Cloud chat sync failed: ", "تعذرت مزامنة المحادثات: ") + error.message
-          : copy("Cloud chat sync failed.", "تعذرت مزامنة المحادثات."));
+          ? (isArabic ? "تعذرت مزامنة المحادثات: " : "Cloud chat sync failed: ") + error.message
+          : (isArabic ? "تعذرت مزامنة المحادثات." : "Cloud chat sync failed."));
       } finally {
         if (active) setCloudReady(true);
       }
     })();
     return () => { active = false; };
-  }, [userId, authResolved]);
+  }, [userId, authResolved, isArabic]);
 
   useEffect(() => {
     document.documentElement.lang = language;
