@@ -13,6 +13,7 @@ const MAX_MESSAGE_LENGTH = 12_000;
 const MAX_TOTAL_LENGTH = 48_000;
 const WINDOW_MS = 60_000;
 const MAX_REQUESTS_PER_WINDOW = 12;
+const MAX_REQUESTS_PER_DAY = 100;
 
 type RateBucket = { count: number; resetAt: number };
 
@@ -26,7 +27,14 @@ const sharedLimiter = sharedLimiterConfigured
   ? new Ratelimit({
       redis: Redis.fromEnv(),
       limiter: Ratelimit.slidingWindow(MAX_REQUESTS_PER_WINDOW, "1 m"),
-      prefix: "nexus-ai:chat",
+      prefix: "nexus-ai:chat:minute",
+    })
+  : null;
+const dailyLimiter = sharedLimiterConfigured
+  ? new Ratelimit({
+      redis: Redis.fromEnv(),
+      limiter: Ratelimit.slidingWindow(MAX_REQUESTS_PER_DAY, "1 d"),
+      prefix: "nexus-ai:chat:daily",
     })
   : null;
 
@@ -123,7 +131,7 @@ export async function POST(request: Request) {
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
       return NextResponse.json({ error: "Authentication is not configured on this server." }, { status: 503 });
     }
-    if (!sharedLimiter) {
+    if (!sharedLimiter || !dailyLimiter) {
       return NextResponse.json({ error: "Shared request protection is not configured on this server." }, { status: 503 });
     }
     try {
@@ -137,11 +145,18 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Could not verify your account." }, { status: 503 });
     }
     try {
-      const result = await sharedLimiter.limit(rateLimitKey);
-      if (!result.success) {
+      const [minuteResult, dailyResult] = await Promise.all([
+        sharedLimiter.limit(rateLimitKey),
+        dailyLimiter.limit(rateLimitKey),
+      ]);
+      if (!minuteResult.success || !dailyResult.success) {
+        const resetAt = !minuteResult.success ? minuteResult.reset : dailyResult.reset;
+        const retryAfter = Math.max(1, Math.ceil((resetAt - Date.now()) / 1000));
         return NextResponse.json(
-          { error: "Too many requests. Please wait a minute and try again." },
-          { status: 429, headers: { "Retry-After": "60" } },
+          { error: !dailyResult.success
+              ? "You have reached the daily AI request limit. Please try again tomorrow."
+              : "Too many requests. Please wait a minute and try again." },
+          { status: 429, headers: { "Retry-After": String(retryAfter) } },
         );
       }
     } catch {
