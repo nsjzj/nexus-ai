@@ -25,6 +25,7 @@
 - npm
 - An API key for an OpenAI-compatible provider, or a reachable local OpenAI-compatible endpoint such as Ollama
 - A Supabase project for accounts and cloud sync
+- Upstash Redis REST credentials for production shared rate limiting
 
 ## Run locally
 
@@ -56,6 +57,8 @@
    AI_MODEL=gpt-4o-mini
    NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
    NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_or_publishable_key
+UPSTASH_REDIS_REST_URL=https://your-database.upstash.io
+UPSTASH_REDIS_REST_TOKEN=your_upstash_token
    ```
 
    Never commit `.env.local`, expose provider keys in client code, or place a Supabase service-role key in a `NEXT_PUBLIC_*` variable.
@@ -84,7 +87,7 @@ The current API limits request size and message count and caps generated output 
 
 ## Supabase data and account isolation
 
-The migration creates profiles, projects, conversations, and messages with Row Level Security policies tied to the authenticated user.
+Apply both migrations in order: `supabase/migrations/0001_initial_schema.sql` and `supabase/migrations/0002_stable_message_order.sql`. They create profiles, projects, conversations, and ordered messages with Row Level Security policies tied to the authenticated user.
 
 - Signed-in users load and save conversations and projects to their own Supabase records.
 - Signed-in browser caches are keyed by account.
@@ -103,7 +106,7 @@ The current GitHub Lab version reads public repository metadata and README files
 The app avoids blocking remote font downloads and animated chat auto-scroll. The chat route has request limits and a provider timeout. These measures reduce avoidable work, but they do not guarantee a lag-free experience.
 
 Before a public multi-instance launch:
-- Replace the in-memory, per-instance rate limiter with a shared limiter.
+- Configure Upstash Redis REST credentials for the shared production rate limiter.
 - Add provider usage budgets and abuse monitoring.
 - Verify authentication, RLS, account switching, and cross-user isolation.
 - Run the typecheck, lint, and production build successfully.
