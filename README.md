@@ -7,7 +7,7 @@
 ## What's included
 
 - Responsive, mobile-first workspace with Arabic/English UI and right-to-left layout.
-- AI Hub using an OpenAI-compatible server-side chat endpoint.
+- AI Hub using an OpenAI-compatible server-side chat endpoint with incremental streaming when supported by the provider.
 - Provider secrets stay on the server; the browser only calls the NEXUS API.
 - Request validation, body-size limits, provider timeouts, safer errors, and a shared production rate limiter backed by Upstash Redis.
 - A response token ceiling to help bound provider latency and usage cost.
@@ -103,7 +103,7 @@ The current GitHub Lab version reads public repository metadata and README files
 
 ## Performance and reliability
 
-The app avoids blocking remote font downloads and animated chat auto-scroll. The chat route has request limits, a shared production limiter, authentication checks, and a provider timeout. These measures reduce avoidable work, but they do not guarantee a lag-free experience.
+The app streams assistant text as it arrives when the provider supports streaming, avoids blocking remote font downloads, and avoids animated chat auto-scroll. The chat route has request limits, a shared production limiter, authentication checks, and a provider timeout. These measures reduce avoidable work, but they do not guarantee a lag-free experience.
 
 Before a public multi-instance launch:
 - Configure Upstash Redis REST credentials for the shared production rate limiter.
@@ -125,7 +125,7 @@ GitHub Actions is configured to run these commands. Their success has not yet be
 ## Roadmap
 
 1. **Foundation:** responsive UI, language support, AI Hub, server-side provider adapter.
-2. **AI Hub:** streaming output, model selection, conversation search/export, usage controls.
+2. **AI Hub:** model selection, conversation search/export, usage controls.
 3. **Project Memory:** project notes/files, per-project instructions, context retrieval.
 4. **GitHub Lab:** secure private-repository connection, source browsing, code review, branch-based patches, and pull requests with user approval.
 5. **Automation:** multi-step workflows, approval checkpoints, activity history, and rollback.
