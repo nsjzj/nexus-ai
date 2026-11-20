@@ -159,6 +159,7 @@ export default function Home() {
               .eq("user_id", userId)
               .in("conversation_id", ids)
               .order("position", { ascending: true })
+              .limit(1200)
           : { data: [], error: null };
         if (messageRows.error) throw messageRows.error;
         const cloudItems: SavedConversation[] = (rows ?? []).map((row) => ({
@@ -271,6 +272,13 @@ export default function Home() {
 
     const savedAt = Math.round(event.timeStamp + performance.timeOrigin);
     const nextMessages: ChatMessage[] = [...messages.filter((m) => m !== welcome), { role: "user", content: text }];
+    const contextMessages: ChatMessage[] = [];
+    let contextLength = 0;
+    for (const message of nextMessages.slice(-40).reverse()) {
+      if (contextLength + message.content.length > 48_000) break;
+      contextMessages.unshift(message);
+      contextLength += message.content.length;
+    }
     setMessages([...nextMessages]);
     setInput("");
     setBusy(true);
@@ -280,7 +288,7 @@ export default function Home() {
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: nextMessages }),
+        body: JSON.stringify({ messages: contextMessages }),
       });
       let data: { message?: ChatMessage; error?: string };
       try {
@@ -400,7 +408,7 @@ export default function Home() {
               </div>
               {notice && <div className="notice" role="alert">{notice}</div>}
               <form className="composer" onSubmit={sendMessage}>
-                <textarea value={input} onChange={(event) => setInput(event.target.value)} onKeyDown={onComposerKeyDown} placeholder={!cloudReady ? copy("Loading your secure chat history…", "جارٍ تحميل سجل محادثاتك...") : copy("Message NEXUS AI…", "اكتب رسالتك إلى NEXUS AI…")} rows={2} />
+                <textarea value={input} onChange={(event) => setInput(event.target.value)} onKeyDown={onComposerKeyDown} placeholder={!cloudReady ? copy("Loading your secure chat history…", "جارٍ تحميل سجل محادثاتك...") : copy("Message NEXUS AI…", "اكتب رسالتك إلى NEXUS AI…")} rows={2} maxLength={12000} />
                 <div className="composer-footer"><span>{copy("Enter to send · Shift + Enter for a new line", "Enter للإرسال · Shift + Enter لسطر جديد")}</span><button className="send-button" type="submit" disabled={!input.trim() || busy || !cloudReady}>{busy ? "…" : "↑"}</button></div>
               </form>
             </div>
