@@ -115,7 +115,7 @@ The checks above are documented commands; run them in a Node.js environment befo
 - Keep API keys in server environment variables only.
 - Do not add secrets, personal access tokens, or private credentials to Git.
 - The current conversation history is stored in the browser's local storage on that device. It is not yet synced between devices or protected by user accounts.
-- Project cards use local storage when signed out and can sync to Supabase when signed in and configured. Chat history remains local-only. Project files, GitHub operations, and automation are not yet implemented.
+- Project cards use local storage when signed out and can sync to Supabase when signed in and configured. Chat history syncs to the signed-in user's Supabase account when configured; signed-out history stays on the current device. Project files, GitHub operations, and automation are not yet implemented.
 - Review AI-generated output before using it in important systems.
 
 ## License
