@@ -13,6 +13,7 @@
 - Server-side OpenAI-compatible chat endpoint.
 - Provider configuration through environment variables; API keys stay on the server.
 - Basic request validation, provider error handling, and request timeout.
+- Initial Supabase SQL migration for profiles, projects, conversations, and messages with per-user Row Level Security.
 - Separate `nexus-ai-foundation` branch so the default `main` branch remains untouched.
 
 ## Requirements
@@ -70,6 +71,12 @@ The chat route uses the OpenAI-compatible `POST /chat/completions` format.
 - The browser calls only the NEXUS server route. The provider secret is not sent to the browser.
 
 Some hosted AI providers charge for API usage. NEXUS AI itself does not currently add a subscription or charge.
+
+## Cloud database preparation
+
+A starter Supabase migration is available at `supabase/migrations/0001_initial_schema.sql`. It creates user profiles, projects, conversations, and messages, enables Row Level Security, and scopes records to the signed-in user. This is a schema foundation only: it has **not** been applied to a Supabase project, and the app is not yet connected to Supabase Auth or cloud storage. Do not treat cloud sync or account support as implemented yet.
+
+To use it later, create a Supabase project, review the SQL, and apply the migration with the Supabase CLI or SQL Editor. Keep the Supabase service-role key server-only; never expose it in browser code.
 
 ## Quality checks
 
