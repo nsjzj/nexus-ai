@@ -9,7 +9,7 @@ import AuthPanel from "@/components/auth/auth-panel";
 import GitHubLab from "@/components/github/github-lab";
 import { createClient } from "@/lib/supabase/client";
 
-type Section = "hub" | "projects" | "github" | "automations" | "settings";
+type Section = "hub" | "projects" | "github" | "settings";
 type SavedConversation = { id: string; title: string; messages: ChatMessage[]; updatedAt: number };
 
 function isSavedConversation(value: unknown): value is SavedConversation {
@@ -32,7 +32,6 @@ const labels: Record<Section, { en: string; ar: string; icon: string }> = {
   hub: { en: "AI Hub", ar: "مركز الذكاء", icon: "✳" },
   projects: { en: "Projects", ar: "المشاريع", icon: "▦" },
   github: { en: "GitHub Lab", ar: "مختبر GitHub", icon: "⌘" },
-  automations: { en: "Automations", ar: "الأتمتة", icon: "↗" },
   settings: { en: "Settings", ar: "الإعدادات", icon: "⚙" },
 };
 
