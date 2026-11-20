@@ -49,6 +49,7 @@ export default function Home() {
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState("");
   const [userId, setUserId] = useState<string | null>(null);
+  const [authResolved, setAuthResolved] = useState(false);
   const [cloudReady, setCloudReady] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const isArabic = language === "ar";
@@ -78,19 +79,27 @@ export default function Home() {
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
     if (!url || !key) {
+      setAuthResolved(true);
       setCloudReady(true);
       return;
     }
     const supabase = createClient();
     void supabase.auth.getUser().then(({ data }) => {
-      if (active) setUserId(data.user?.id ?? null);
+      if (active) {
+        setUserId(data.user?.id ?? null);
+        setAuthResolved(true);
+      }
     }).catch(() => {
-      if (active) setCloudReady(true);
+      if (active) {
+        setAuthResolved(true);
+        setCloudReady(true);
+      }
     });
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       if (active) {
         setCloudReady(false);
         setUserId(session?.user.id ?? null);
+        setAuthResolved(true);
       }
     });
     return () => {
@@ -100,6 +109,7 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
+    if (!authResolved) return;
     // Clear the previous account's visible history immediately on account changes.
     setConversations([]);
     setActiveConversationId(null);
@@ -169,7 +179,7 @@ export default function Home() {
       }
     })();
     return () => { active = false; };
-  }, [userId]);
+  }, [userId, authResolved]);
 
   useEffect(() => {
     document.documentElement.lang = language;
