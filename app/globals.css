@@ -65,3 +65,9 @@ button{cursor:pointer}
 .project-empty h2{font-size:16px;margin:0 0 7px}.project-empty p{max-width:390px;color:#929bb1;font-size:11px;line-height:1.7;margin:0 0 16px}
 .project-back{display:block;margin-inline:auto}
 @media(max-width:600px){.project-grid{grid-template-columns:1fr}.project-toolbar{align-items:stretch}.project-search{max-width:none}.project-form{padding:13px}}
+
+
+.settings-card{max-width:650px;border:1px solid #292e43;background:linear-gradient(155deg,#151a2a,#101421);border-radius:13px;padding:22px}
+.settings-card h2{font-size:18px;margin:10px 0 7px}.settings-card>p{font-size:11px;line-height:1.7;color:#929bb1}
+.settings-card .project-form{margin-top:18px}.account-row{display:flex;align-items:center;justify-content:space-between;gap:12px;border:1px solid #30364b;background:#0b0f19;border-radius:9px;padding:13px;margin-top:17px;font-size:12px;overflow-wrap:anywhere}
+.settings-message{font-size:11px;color:#bcb3ff;margin-top:14px}.settings-note{border-top:1px solid #292e43;padding-top:13px;margin-top:16px!important}
