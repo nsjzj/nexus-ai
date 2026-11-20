@@ -48,8 +48,7 @@ create table if not exists public.messages (
   role text not null check (role in ('user', 'assistant')),
   content text not null check (char_length(content) between 1 and 12000),
   position integer not null check (position >= 0),
-  created_at timestamptz not null default now(),
-  unique (conversation_id, position)
+  created_at timestamptz not null default now()
 );
 
 create index if not exists projects_user_updated_idx
@@ -60,6 +59,8 @@ create index if not exists conversations_project_idx
   on public.conversations (project_id);
 create index if not exists messages_conversation_created_idx
   on public.messages (conversation_id, created_at);
+create unique index if not exists messages_conversation_position_unique_idx
+  on public.messages (conversation_id, position);
 create index if not exists messages_user_idx
   on public.messages (user_id);
 
