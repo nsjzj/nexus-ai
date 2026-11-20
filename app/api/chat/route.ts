@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
 import type { ChatMessage } from "@/lib/ai/types";
+import { Ratelimit } from "@upstash/ratelimit";
+import { Redis } from "@upstash/redis";
+import { createClient as createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -16,6 +19,16 @@ type RateBucket = { count: number; resetAt: number };
 // Best-effort per-instance limiter only. Use a shared store before public,
 // multi-instance deployment.
 const requestBuckets = new Map<string, RateBucket>();
+const sharedLimiterConfigured = Boolean(
+  process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN,
+);
+const sharedLimiter = sharedLimiterConfigured
+  ? new Ratelimit({
+      redis: Redis.fromEnv(),
+      limiter: Ratelimit.slidingWindow(MAX_REQUESTS_PER_WINDOW, "1 m"),
+      prefix: "nexus-ai:chat",
+    })
+  : null;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -105,7 +118,36 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Request origin is not allowed." }, { status: 403 });
   }
 
-  if (rateLimited(getClientKey(request))) {
+  let rateLimitKey = getClientKey(request);
+  if (process.env.NODE_ENV === "production") {
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+      return NextResponse.json({ error: "Authentication is not configured on this server." }, { status: 503 });
+    }
+    if (!sharedLimiter) {
+      return NextResponse.json({ error: "Shared request protection is not configured on this server." }, { status: 503 });
+    }
+    try {
+      const supabase = await createSupabaseServerClient();
+      const { data, error } = await supabase.auth.getUser();
+      if (error || !data.user) {
+        return NextResponse.json({ error: "Sign in to use the AI assistant." }, { status: 401 });
+      }
+      rateLimitKey = data.user.id;
+    } catch {
+      return NextResponse.json({ error: "Could not verify your account." }, { status: 503 });
+    }
+    try {
+      const result = await sharedLimiter.limit(rateLimitKey);
+      if (!result.success) {
+        return NextResponse.json(
+          { error: "Too many requests. Please wait a minute and try again." },
+          { status: 429, headers: { "Retry-After": "60" } },
+        );
+      }
+    } catch {
+      return NextResponse.json({ error: "Request protection is temporarily unavailable." }, { status: 503 });
+    }
+  } else if (rateLimited(rateLimitKey)) {
     return NextResponse.json(
       { error: "Too many requests. Please wait a minute and try again." },
       { status: 429, headers: { "Retry-After": "60" } },
