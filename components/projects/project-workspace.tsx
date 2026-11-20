@@ -134,7 +134,7 @@ export default function ProjectWorkspace({ isArabic, onBack }: { isArabic: boole
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loaded, userId]);
 
-  async function persist(next: Project[]) {
+  async function persist(next: Project[], removedIds: string[] = []) {
     setProjects(next);
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
@@ -160,6 +160,10 @@ export default function ProjectWorkspace({ isArabic, onBack }: { isArabic: boole
         { onConflict: "id" },
       );
       if (error) throw error;
+      if (removedIds.length) {
+        const { error: deleteError } = await supabase.from("projects").delete().in("id", removedIds).eq("user_id", userId);
+        if (deleteError) throw deleteError;
+      }
       setStorageWarning("");
     } catch (error) {
       setStorageWarning(error instanceof Error
@@ -194,8 +198,8 @@ export default function ProjectWorkspace({ isArabic, onBack }: { isArabic: boole
   }
 
   function deleteProject(project: Project) {
-    const confirmed = window.confirm(t(`Delete "${project.name}"? This only removes its local project card.`, `تحذف "${project.name}"؟ سيؤدي هذا إلى إزالة بطاقة المشروع من هذا الجهاز فقط.`));
-    if (confirmed) void persist(projects.filter((item) => item.id !== project.id));
+    const confirmed = window.confirm(t(`Delete "${project.name}"? This removes the project from your account and this device.`, `تحذف "${project.name}"؟ سيؤدي هذا إلى حذف المشروع من حسابك وهذا الجهاز.`));
+    if (confirmed) void persist(projects.filter((item) => item.id !== project.id), [project.id]);
   }
 
   const filtered = useMemo(() => projects.filter((project) =>
