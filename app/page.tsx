@@ -415,7 +415,7 @@ export default function Home() {
             <div className="placeholder-icon">{labels[section].icon}</div>
             <div className="eyebrow">{copy("COMING IN THE NEXT BUILD", "في الإصدار القادم")}</div>
             <h1>{labels[section][language]}</h1>
-            <p>{section === "projects" ? copy("A home for your files, notes, and project-specific AI context.", "مكان لملفاتك وملاحظاتك وسياق الذكاء الاصطناعي لكل مشروع.") : section === "github" ? copy("Repository insights, code reviews, and safe branch-based changes.", "تحليل المستودعات ومراجعة الكود والتعديلات الآمنة عبر الفروع.") : section === "automations" ? copy("Build repeatable multi-step workflows with approval checkpoints.", "أنشئ مهاماً متسلسلة قابلة للتكرار مع نقاط موافقة.") : copy("Manage your language, AI provider, and workspace preferences.", "تحكّم باللغة ومزوّد الذكاء وتفضيلات مساحة العمل.")}</p>
+            <p>{copy("Build repeatable multi-step workflows with approval checkpoints.", "أنشئ مهاماً متسلسلة قابلة للتكرار مع نقاط موافقة.")}</p>
             <span className="coming-pill"><i />{copy("Foundation phase", "مرحلة التأسيس")}</span>
             <button className="back-button" onClick={() => setSection("hub")}>{copy("Back to AI Hub", "العودة إلى مركز الذكاء")}</button>
           </div>
