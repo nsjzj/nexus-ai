@@ -116,9 +116,6 @@ export default function ProjectWorkspace({ isArabic, onBack }: { isArabic: boole
         if (!active) return;
         setProjects(cloudProjects);
         try { localStorage.setItem(`${STORAGE_KEY}:${userId}`, JSON.stringify(cloudProjects)); } catch { /* Cloud remains source of truth. */ }
-        const merged = [...cloudProjects, ...localOnly].sort((a, b) => b.updatedAt - a.updatedAt);
-        setProjects(merged);
-        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(merged)); } catch { /* Cloud remains source of truth. */ }
       } catch (error) {
         if (active) setStorageWarning(error instanceof Error
           ? t("Cloud sync failed: ", "تعذرت المزامنة السحابية: ") + error.message
