@@ -452,7 +452,7 @@ export default function Home() {
             </div>
 
             <div className="chat-card">
-              <div className="chat-header"><div><span className="live-dot" />{copy("NEXUS ASSISTANT", "مساعد NEXUS")}<span className="chat-subtitle">{copy("Private workspace", "مساحة خاصة")}</span></div><button className="icon-button" onClick={newChat} title="New chat">＋</button></div>
+              <div className="chat-header"><div><span className="live-dot" />{copy("NEXUS ASSISTANT", "مساعد NEXUS")}<span className="chat-subtitle">{copy("Your workspace", "مساحة عملك")}</span></div><button className="icon-button" onClick={newChat} title="New chat">＋</button></div>
               {!cloudReady && <div className="settings-note">{copy("Connecting your chat history…", "جارٍ الاتصال بسجل محادثاتك…")}</div>}
               <div className="messages">
                 {!cloudReady ? <p className="muted">{copy("Loading your conversations…", "جارٍ تحميل محادثاتك…")}</p> : messages.map((message, index) => (
@@ -478,7 +478,7 @@ export default function Home() {
               <button onClick={() => setInput(copy("Explain a difficult concept simply.", "اشرح لي مفهوماً صعباً ببساطة."))}>⌁ {copy("Learn something", "تعلّم شيئاً")}</button>
               <button onClick={() => setInput(copy("Review this code and suggest improvements.", "راجع هذا الكود واقترح تحسينات."))}>⌘ {copy("Review code", "راجع كوداً")}</button>
             </div>
-            <p className="footnote">{userId ? copy("Your conversations sync to your account. AI can make mistakes; review important information.", "تتزامن محادثاتك مع حسابك. قد يخطئ الذكاء الاصطناعي؛ راجع المعلومات المهمة.") : copy("Conversations are saved on this device. Sign in to enable cloud sync.", "تُحفظ المحادثات على هذا الجهاز. سجّل الدخول لتفعيل المزامنة السحابية.")}</p>
+            <p className="footnote">{userId ? copy("Messages are sent to the configured AI provider. Chats sync to your Supabase account. AI can make mistakes; review important information.", "تُرسل رسائلك إلى مزوّد الذكاء الاصطناعي المُعدّ، وتتزامن المحادثات مع حساب Supabase. قد يخطئ الذكاء الاصطناعي؛ راجع المعلومات المهمة.") : copy("Messages are sent to the configured AI provider. Chats stay in this browser. Sign in to enable cloud sync.", "تُرسل رسائلك إلى مزوّد الذكاء الاصطناعي المُعدّ، وتبقى المحادثات في هذا المتصفح. سجّل الدخول لتفعيل المزامنة السحابية.")}</p>
           </div>
         ) : (
           <div className="placeholder-page">
