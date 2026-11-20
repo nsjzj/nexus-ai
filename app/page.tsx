@@ -107,6 +107,9 @@ export default function Home() {
     });
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       if (active) {
+        requestController.current?.abort();
+        requestController.current = null;
+        setBusy(false);
         setCloudReady(false);
         setConversations([]);
         setActiveConversationId(null);
@@ -332,6 +335,7 @@ export default function Home() {
         while (true) {
           const { done, value } = await reader.read();
           buffer += decoder.decode(value, { stream: !done });
+          buffer = buffer.replace(/\r\n/g, "\n");
           const events = buffer.split("\n\n");
           buffer = events.pop() || "";
           for (const eventBlock of events) processEvent(eventBlock);
