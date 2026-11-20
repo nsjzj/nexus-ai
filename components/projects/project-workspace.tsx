@@ -113,23 +113,9 @@ export default function ProjectWorkspace({ isArabic, onBack }: { isArabic: boole
           createdAt: new Date(item.created_at).getTime(),
           updatedAt: new Date(item.updated_at).getTime(),
         }));
-        const localOnly = projects.filter((local) => !cloudProjects.some((cloud) => cloud.id === local.id));
-        if (localOnly.length) {
-          const { error: uploadError } = await supabase.from("projects").upsert(
-            localOnly.map((item) => ({
-              id: item.id,
-              user_id: userId,
-              name: item.name,
-              description: item.description,
-              status: item.status,
-              created_at: new Date(item.createdAt).toISOString(),
-              updated_at: new Date(item.updatedAt).toISOString(),
-            })),
-            { onConflict: "id" },
-          );
-          if (uploadError) throw uploadError;
-        }
         if (!active) return;
+        setProjects(cloudProjects);
+        try { localStorage.setItem(`${STORAGE_KEY}:${userId}`, JSON.stringify(cloudProjects)); } catch { /* Cloud remains source of truth. */ }
         const merged = [...cloudProjects, ...localOnly].sort((a, b) => b.updatedAt - a.updatedAt);
         setProjects(merged);
         try { localStorage.setItem(STORAGE_KEY, JSON.stringify(merged)); } catch { /* Cloud remains source of truth. */ }
@@ -149,7 +135,7 @@ export default function ProjectWorkspace({ isArabic, onBack }: { isArabic: boole
   async function persist(next: Project[], removedIds: string[] = []) {
     setProjects(next);
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      localStorage.setItem(userId ? `${STORAGE_KEY}:${userId}` : STORAGE_KEY, JSON.stringify(next));
     } catch {
       setStorageWarning(t(
         "Changes are visible for this session, but browser storage is unavailable.",
@@ -224,9 +210,9 @@ export default function ProjectWorkspace({ isArabic, onBack }: { isArabic: boole
         <div>
           <div className="eyebrow">{t("YOUR WORKSPACE", "مساحة عملك")}</div>
           <h1>{t("Projects, kept in one place.", "كل مشاريعك في مكان واحد.")}</h1>
-          <p>{t("Create a home for each idea. Your project list is saved on this device.", "أنشئ مساحة لكل فكرة. تُحفظ قائمة مشاريعك على هذا الجهاز.")}</p>
+          <p>{userId ? t("Your projects sync with your account.", "تتزامن مشاريعك مع حسابك.") : t("Create a home for each idea. Your project list is saved on this device.", "أنشئ مساحة لكل فكرة. تُحفظ قائمة مشاريعك على هذا الجهاز.")}</p>
         </div>
-        <button className="send-button project-create-trigger" onClick={() => setShowForm((value) => !value)} aria-label={t("Create project", "إنشاء مشروع")}>＋</button>
+        <button className="send-button project-create-trigger" onClick={() => setShowForm((value) => !value)} disabled={!loaded || !cloudReady} aria-label={t("Create project", "إنشاء مشروع")}>＋</button>
       </div>
 
       {showForm && (
@@ -239,7 +225,7 @@ export default function ProjectWorkspace({ isArabic, onBack }: { isArabic: boole
           </label>
           <div className="project-form-actions">
             <button type="button" className="back-button" onClick={() => setShowForm(false)}>{t("Cancel", "إلغاء")}</button>
-            <button type="submit" className="project-primary" disabled={!name.trim()}>{t("Create project", "إنشاء المشروع")}</button>
+            <button type="submit" className="project-primary" disabled={!name.trim() || !cloudReady}>{t("Create project", "إنشاء المشروع")}</button>
           </div>
         </form>
       )}
@@ -275,7 +261,7 @@ export default function ProjectWorkspace({ isArabic, onBack }: { isArabic: boole
         </div>
       )}
       {storageWarning && <p className="notice" role="alert">{storageWarning}</p>}
-      <p className="footnote">{userId ? t("Signed-in projects sync with your Supabase account. Local copies remain available on this device.", "تتزامن المشاريع مع حساب Supabase عند تسجيل الدخول، وتبقى نسخة محلية على هذا الجهاز.") : t("Projects are saved on this device. Sign in and configure Supabase to enable cloud sync.", "تُحفظ المشاريع على هذا الجهاز. سجّل الدخول واضبط Supabase لتفعيل المزامنة.")}</p>
+      <p className="footnote">{userId ? t("Projects are stored in your Supabase account with a private device cache. Signed-out projects remain separate.", "تُحفظ المشاريع في حساب Supabase مع نسخة محلية خاصة بالجهاز. وتبقى مشاريع ما قبل تسجيل الدخول منفصلة.") : t("Projects are saved on this device. Sign in and configure Supabase to enable cloud sync.", "تُحفظ المشاريع على هذا الجهاز. سجّل الدخول واضبط Supabase لتفعيل المزامنة.")}</p>
       <button className="back-button project-back" onClick={onBack}>{t("Back to AI Hub", "العودة إلى مركز الذكاء")}</button>
     </div>
   );
