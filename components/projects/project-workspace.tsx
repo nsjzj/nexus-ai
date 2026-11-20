@@ -93,6 +93,13 @@ export default function ProjectWorkspace({ isArabic, onBack }: { isArabic: boole
   useEffect(() => {
     if (!loaded || !authResolved) return;
     if (!userId) {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        const parsed: unknown = saved ? JSON.parse(saved) : [];
+        setProjects(Array.isArray(parsed) && parsed.every(isProject) ? parsed : []);
+      } catch {
+        setProjects([]);
+      }
       setCloudReady(true);
       return;
     }
@@ -239,7 +246,7 @@ export default function ProjectWorkspace({ isArabic, onBack }: { isArabic: boole
           <div className="placeholder-icon">▦</div>
           <h2>{query ? t("No matching projects", "ما لقينا مشاريع مطابقة") : t("Your first project starts here.", "مشروعك الأول يبدأ من هنا.")}</h2>
           <p>{query ? t("Try another search term.", "جرّب كلمة بحث ثانية.") : t("Keep ideas, notes, and future AI context organized as you grow.", "رتّب أفكارك وملاحظاتك وسياق الذكاء الاصطناعي مع توسّع مشاريعك.")}</p>
-          {!query && <button className="project-primary" onClick={() => setShowForm(true)}>{t("Create your first project", "أنشئ أول مشروع")}</button>}
+          {!query && <button className="project-primary" disabled={!cloudReady} onClick={() => setShowForm(true)}>{t("Create your first project", "أنشئ أول مشروع")}</button>}
         </div>
       ) : (
         <div className="project-grid">
@@ -251,8 +258,8 @@ export default function ProjectWorkspace({ isArabic, onBack }: { isArabic: boole
               <div className="project-card-footer">
                 <span>{new Date(project.updatedAt).toLocaleDateString(isArabic ? "ar" : "en", { month: "short", day: "numeric", year: "numeric" })}</span>
                 <div>
-                  <button onClick={() => toggleStatus(project)}>{project.status === "active" ? t("Pause", "إيقاف") : t("Resume", "استئناف")}</button>
-                  <button className="danger-text" onClick={() => deleteProject(project)}>{t("Delete", "حذف")}</button>
+                  <button disabled={!cloudReady} onClick={() => toggleStatus(project)}>{project.status === "active" ? t("Pause", "إيقاف") : t("Resume", "استئناف")}</button>
+                  <button className="danger-text" disabled={!cloudReady} onClick={() => deleteProject(project)}>{t("Delete", "حذف")}</button>
                 </div>
               </div>
             </article>
