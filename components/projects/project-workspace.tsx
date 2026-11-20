@@ -104,6 +104,8 @@ export default function ProjectWorkspace({ isArabic, onBack }: { isArabic: boole
       return;
     }
     let active = true;
+    setProjects([]);
+    setStorageWarning("");
     setCloudReady(false);
     void (async () => {
       try {
