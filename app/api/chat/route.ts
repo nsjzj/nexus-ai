@@ -168,7 +168,7 @@ export async function POST(request: Request) {
         "Content-Type": "application/json",
         Authorization: `Bearer ${apiKey}`,
       },
-      body: JSON.stringify({ model, messages, temperature: 0.7 }),
+      body: JSON.stringify({ model, messages, temperature: 0.7, max_tokens: 1200 }),
       signal: AbortSignal.timeout(60_000),
       cache: "no-store",
     });
