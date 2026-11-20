@@ -411,8 +411,8 @@ export default function Home() {
           {conversations.length === 0 && <p className="muted small">{copy("Your chats will appear here.", "ستظهر محادثاتك هنا.")}</p>}
           <div className="profile">
             <div className="avatar">N</div>
-            <div><strong>{userId ? copy("Connected account", "حساب متصل") : copy("NEXUS User", "مستخدم NEXUS")}</strong><small>{userId ? copy("Cloud sync enabled", "المزامنة السحابية مفعّلة") : copy("Personal workspace", "مساحة شخصية")}</small></div>
-            <span className="profile-menu">•••</span>
+            <div><strong>{userId ? copy("Connected account", "حساب متصل") : copy("NEXUS User", "مستخدم NEXUS")}</strong><small>{userId ? copy("Account connected", "الحساب متصل") : copy("Personal workspace", "مساحة شخصية")}</small></div>
+            
           </div>
         </div>
       </aside>
@@ -447,7 +447,7 @@ export default function Home() {
                 <h1>{copy("One space. Many possibilities.", "مساحة واحدة، احتمالات كثيرة.")}</h1>
                 <p>{copy("Think, create, and build with AI — without losing your context.", "فكّر وابتكر وابنِ باستخدام الذكاء الاصطناعي دون أن تفقد سياق عملك.")}</p>
               </div>
-              <div className="model-pill"><span className="model-spark">✳</span><span><small>{copy("ACTIVE PROVIDER", "المزوّد الحالي")}</small><strong>OpenAI-compatible</strong></span><span className="chevron">⌄</span></div>
+              <div className="model-pill"><span className="model-spark">✳</span><span><small>{copy("AI PROVIDER TYPE", "نوع مزوّد الذكاء")}</small><strong>OpenAI-compatible</strong></span></div>
             </div>
 
             <div className="chat-card">
