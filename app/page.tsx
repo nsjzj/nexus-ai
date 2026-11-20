@@ -82,7 +82,6 @@ export default function Home() {
 
     const nextMessages: ChatMessage[] = [...messages.filter((m) => m !== welcome), { role: "user", content: text }];
     setMessages([...nextMessages]);
-    saveConversation(nextMessages);
     setInput("");
     setBusy(true);
     setNotice("");
