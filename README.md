@@ -2,7 +2,7 @@
 
 **Your All-in-One AI Workspace** — a mobile-first workspace designed to make AI and developer tools easier to use.
 
-> Project status: active foundation build on Next.js 16.4.6. The AI Hub, device-local chat, optional per-account chat/project sync, Supabase email authentication, and read-only public GitHub Lab are implemented in the development branch. A real Supabase project, AI provider credentials, and deployment are still required. Automated checks have not yet been verified.
+> Project status: active foundation build on Next.js 16.4.6. The AI Hub, device-local chat, optional per-account chat/project sync, Supabase email authentication, and read-only public GitHub Lab are implemented in the development branch. A real Supabase project, AI provider credentials, and deployment are still required. The current development branch passes TypeScript, ESLint, and production-build checks in GitHub Actions; the dependency audit reported zero known advisories at the verified commit.
 
 ## What's included
 
@@ -57,8 +57,8 @@
    AI_MODEL=gpt-4o-mini
    NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
    NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_or_publishable_key
-UPSTASH_REDIS_REST_URL=https://your-database.upstash.io
-UPSTASH_REDIS_REST_TOKEN=your_upstash_token
+   UPSTASH_REDIS_REST_URL=https://your-database.upstash.io
+   UPSTASH_REDIS_REST_TOKEN=your_upstash_token
    ```
 
    Never commit `.env.local`, expose provider keys in client code, or place a Supabase service-role key in a `NEXT_PUBLIC_*` variable.
@@ -120,7 +120,7 @@ npm run lint
 npm run build
 ```
 
-GitHub Actions is configured to run these commands. Their success has not yet been confirmed for the current branch.
+GitHub Actions passed `npm run typecheck`, `npm run lint`, and `npm run build` on the current implementation. `npm audit` reported zero known vulnerabilities in that verified dependency tree.
 
 ## Roadmap
 
