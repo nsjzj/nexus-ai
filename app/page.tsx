@@ -176,7 +176,7 @@ export default function Home() {
   }, [language]);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    bottomRef.current?.scrollIntoView({ behavior: "auto" });
   }, [messages, busy]);
 
   function persist(next: SavedConversation[]) {
