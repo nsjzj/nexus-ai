@@ -133,6 +133,8 @@ GitHub Actions passed `npm run typecheck`, `npm run lint`, and `npm run build` o
 
 ## Safety and privacy
 
+- Chat prompts are sent to the AI provider configured by the deployment to generate responses.
+- Signed-in conversation/project data is stored in the configured Supabase project; signed-out data remains in the current browser storage.
 - Keep provider and service-role keys on the server only.
 - Do not commit secrets, personal access tokens, or private credentials.
 - Review AI-generated output before using it in important systems.
