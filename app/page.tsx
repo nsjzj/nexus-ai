@@ -100,6 +100,10 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
+    // Clear the previous account's visible history immediately on account changes.
+    setConversations([]);
+    setActiveConversationId(null);
+    setMessages([welcome]);
     if (!userId) {
       setCloudReady(true);
       return;
@@ -233,7 +237,7 @@ export default function Home() {
   async function sendMessage(event?: FormEvent) {
     event?.preventDefault();
     const text = input.trim();
-    if (!text || busy) return;
+    if (!text || busy || !cloudReady) return;
 
     const nextMessages: ChatMessage[] = [...messages.filter((m) => m !== welcome), { role: "user", content: text }];
     setMessages([...nextMessages]);
@@ -365,8 +369,8 @@ export default function Home() {
               </div>
               {notice && <div className="notice" role="alert">{notice}</div>}
               <form className="composer" onSubmit={sendMessage}>
-                <textarea value={input} onChange={(event) => setInput(event.target.value)} onKeyDown={onComposerKeyDown} placeholder={copy("Message NEXUS AI…", "اكتب رسالتك إلى NEXUS AI…")} rows={2} />
-                <div className="composer-footer"><span>{copy("Enter to send · Shift + Enter for a new line", "Enter للإرسال · Shift + Enter لسطر جديد")}</span><button className="send-button" type="submit" disabled={!input.trim() || busy}>{busy ? "…" : "↑"}</button></div>
+                <textarea value={input} onChange={(event) => setInput(event.target.value)} onKeyDown={onComposerKeyDown} placeholder={!cloudReady ? copy("Loading your secure chat history…", "جارٍ تحميل سجل محادثاتك...") : copy("Message NEXUS AI…", "اكتب رسالتك إلى NEXUS AI…")} rows={2} />
+                <div className="composer-footer"><span>{copy("Enter to send · Shift + Enter for a new line", "Enter للإرسال · Shift + Enter لسطر جديد")}</span><button className="send-button" type="submit" disabled={!input.trim() || busy || !cloudReady}>{busy ? "…" : "↑"}</button></div>
               </form>
             </div>
             <div className="quick-prompts">
