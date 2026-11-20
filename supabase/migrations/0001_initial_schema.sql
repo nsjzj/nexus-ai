@@ -47,7 +47,9 @@ create table if not exists public.messages (
   user_id uuid not null references auth.users(id) on delete cascade,
   role text not null check (role in ('user', 'assistant')),
   content text not null check (char_length(content) between 1 and 12000),
-  created_at timestamptz not null default now()
+  position integer not null check (position >= 0),
+  created_at timestamptz not null default now(),
+  unique (conversation_id, position)
 );
 
 create index if not exists projects_user_updated_idx
