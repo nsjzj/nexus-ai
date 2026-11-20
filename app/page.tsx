@@ -69,6 +69,10 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
+    document.documentElement.lang = language;
+  }, [language]);
+
+  useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, busy]);
 
@@ -121,12 +125,18 @@ export default function Home() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ messages: nextMessages }),
       });
-      const data = (await response.json()) as { message?: ChatMessage; error?: string };
+      let data: { message?: ChatMessage; error?: string };
+      try {
+        data = (await response.json()) as { message?: ChatMessage; error?: string };
+      } catch {
+        throw new Error("The server returned an invalid response. Please try again.");
+      }
       if (!response.ok || !data.message) throw new Error(data.error || "Something went wrong.");
       const completed = [...nextMessages, data.message];
       setMessages(completed);
       saveConversation(completed);
     } catch (error) {
+      saveConversation(nextMessages);
       setNotice(error instanceof Error ? error.message : "Could not send the message.");
     } finally {
       setBusy(false);
