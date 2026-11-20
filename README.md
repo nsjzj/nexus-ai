@@ -9,7 +9,7 @@
 - Responsive, mobile-first workspace with Arabic/English UI and right-to-left layout.
 - AI Hub using an OpenAI-compatible server-side chat endpoint.
 - Provider secrets stay on the server; the browser only calls the NEXUS API.
-- Basic request validation, body-size limits, timeout handling, safer provider errors, and a best-effort per-instance request limiter.
+- Request validation, body-size limits, provider timeouts, safer errors, and a shared production rate limiter backed by Upstash Redis.
 - A response token ceiling to help bound provider latency and usage cost.
 - Local conversation history for signed-out users.
 - Per-account conversation history sync when Supabase is configured and the user is signed in.
@@ -63,7 +63,7 @@ UPSTASH_REDIS_REST_TOKEN=your_upstash_token
 
    Never commit `.env.local`, expose provider keys in client code, or place a Supabase service-role key in a `NEXT_PUBLIC_*` variable.
 
-5. Apply `supabase/migrations/0001_initial_schema.sql` in the Supabase SQL Editor or through the Supabase CLI.
+5. Apply both migrations in order: `supabase/migrations/0001_initial_schema.sql` and `supabase/migrations/0002_stable_message_order.sql`, using the Supabase SQL Editor or Supabase CLI.
 
 6. In Supabase Auth, set the site URL and allowed redirect URLs. Include `http://localhost:3000/auth/callback` for local development and your production origin plus `/auth/callback` after deployment.
 
@@ -83,7 +83,7 @@ The server route uses the OpenAI-compatible `POST /chat/completions` format.
 - Ollama: use a reachable Ollama endpoint such as `http://localhost:11434/v1`, set the key value required by that endpoint, and select a model installed locally.
 - Some hosted providers charge for API usage. NEXUS AI does not currently add a subscription, but provider usage may cost money.
 
-The current API limits request size and message count and caps generated output at 1,200 tokens. This is a conservative default, not a guarantee of low latency: response speed depends on the selected model, provider, network, and hosting region.
+The API requires signed-in Supabase users in production, applies shared per-user rate limits through Upstash Redis, limits request size and message count, and caps generated output at 1,200 tokens. Local development uses an in-memory best-effort limiter. This is a conservative default, not a guarantee of low latency: response speed depends on the selected model, provider, network, and hosting region.
 
 ## Supabase data and account isolation
 
@@ -95,7 +95,7 @@ Apply both migrations in order: `supabase/migrations/0001_initial_schema.sql` an
 - Existing signed-out local history is not automatically copied into an account. This avoids accidentally transferring one person's device history into another account.
 - Cloud sync requires the migration to be applied and the Supabase URL/key and Auth redirect settings to be configured.
 
-The Supabase Auth and cloud-sync code has not yet been verified against a live project. Do not treat cloud sync as production-proven until a configured test account has been used to verify sign-up, sign-in, sign-out, cross-device retrieval, and data isolation.
+The production AI endpoint fails closed if Supabase Auth or Upstash credentials are missing. The Supabase Auth and cloud-sync code has not yet been verified against a live project. Do not treat cloud sync as production-proven until a configured test account has been used to verify sign-up, sign-in, sign-out, cross-device retrieval, and data isolation.
 
 ## GitHub Lab scope
 
@@ -103,7 +103,7 @@ The current GitHub Lab version reads public repository metadata and README files
 
 ## Performance and reliability
 
-The app avoids blocking remote font downloads and animated chat auto-scroll. The chat route has request limits and a provider timeout. These measures reduce avoidable work, but they do not guarantee a lag-free experience.
+The app avoids blocking remote font downloads and animated chat auto-scroll. The chat route has request limits, a shared production limiter, authentication checks, and a provider timeout. These measures reduce avoidable work, but they do not guarantee a lag-free experience.
 
 Before a public multi-instance launch:
 - Configure Upstash Redis REST credentials for the shared production rate limiter.
