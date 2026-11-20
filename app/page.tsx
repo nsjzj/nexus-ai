@@ -105,6 +105,19 @@ export default function Home() {
     setActiveConversationId(null);
     setMessages([welcome]);
     if (!userId) {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        const parsed: unknown = saved ? JSON.parse(saved) : [];
+        if (Array.isArray(parsed) && parsed.every(isSavedConversation)) {
+          setConversations(parsed);
+          if (parsed[0]) {
+            setActiveConversationId(parsed[0].id);
+            setMessages(parsed[0].messages);
+          }
+        }
+      } catch {
+        // Keep the clean welcome state if local history is unavailable.
+      }
       setCloudReady(true);
       return;
     }
