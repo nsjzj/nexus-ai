@@ -27,6 +27,7 @@ export default function Home() {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([welcome]);
   const [conversations, setConversations] = useState<SavedConversation[]>([]);
+  const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -56,16 +57,19 @@ export default function Home() {
 
   function saveConversation(nextMessages: ChatMessage[]) {
     const firstUser = nextMessages.find((message) => message.role === "user")?.content || "New conversation";
+    const id = activeConversationId || crypto.randomUUID();
     const item: SavedConversation = {
-      id: crypto.randomUUID(),
+      id,
       title: firstUser.slice(0, 42),
       messages: nextMessages,
       updatedAt: Date.now(),
     };
-    persist([item, ...conversations].slice(0, 30));
+    setActiveConversationId(id);
+    persist([item, ...conversations.filter((conversation) => conversation.id !== id)].slice(0, 30));
   }
 
   function newChat() {
+    setActiveConversationId(null);
     setMessages([welcome]);
     setInput("");
     setNotice("");
@@ -78,6 +82,7 @@ export default function Home() {
 
     const nextMessages: ChatMessage[] = [...messages.filter((m) => m !== welcome), { role: "user", content: text }];
     setMessages([...nextMessages]);
+    saveConversation(nextMessages);
     setInput("");
     setBusy(true);
     setNotice("");
@@ -108,6 +113,7 @@ export default function Home() {
   }
 
   function openConversation(item: SavedConversation) {
+    setActiveConversationId(item.id);
     setMessages(item.messages);
     setSection("hub");
     setNotice("");
