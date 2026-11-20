@@ -4,6 +4,7 @@ import { FormEvent, KeyboardEvent, useEffect, useRef, useState } from "react";
 import type { ChatMessage } from "@/lib/ai/types";
 import ProjectWorkspace from "@/components/projects/project-workspace";
 import AuthPanel from "@/components/auth/auth-panel";
+import GitHubLab from "@/components/github/github-lab";
 
 type Section = "hub" | "projects" | "github" | "automations" | "settings";
 type SavedConversation = { id: string; title: string; messages: ChatMessage[]; updatedAt: number };
@@ -214,6 +215,8 @@ export default function Home() {
             </div>
             <AuthPanel isArabic={isArabic} />
           </div>
+        ) : section === "github" ? (
+          <GitHubLab isArabic={isArabic} />
         ) : section === "hub" ? (
           <div className="hub-layout">
             <div className="page-heading">
