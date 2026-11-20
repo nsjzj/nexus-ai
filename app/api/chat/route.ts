@@ -210,12 +210,11 @@ export async function POST(request: Request) {
         "Content-Type": "application/json",
         Authorization: `Bearer ${apiKey}`,
       },
-      body: JSON.stringify({ model, messages, temperature: 0.7, max_tokens: 1200 }),
+      body: JSON.stringify({ model, messages, temperature: 0.7, max_tokens: 1200, stream: true }),
       signal: AbortSignal.timeout(60_000),
       cache: "no-store",
     });
 
-    const data: unknown = await upstream.json().catch(() => null);
     if (!upstream.ok) {
       return NextResponse.json(
         { error: providerErrorMessage(upstream.status) },
@@ -223,6 +222,19 @@ export async function POST(request: Request) {
       );
     }
 
+    const contentType = upstream.headers.get("content-type") || "";
+    if (contentType.includes("text/event-stream") && upstream.body) {
+      return new Response(upstream.body, {
+        status: 200,
+        headers: {
+          "Content-Type": "text/event-stream; charset=utf-8",
+          "Cache-Control": "no-cache, no-transform",
+          "X-Accel-Buffering": "no",
+        },
+      });
+    }
+
+    const data: unknown = await upstream.json().catch(() => null);
     let content: unknown = null;
     if (isRecord(data) && Array.isArray(data.choices)) {
       const firstChoice: unknown = data.choices[0];
