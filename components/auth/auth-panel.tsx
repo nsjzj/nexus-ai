@@ -17,7 +17,7 @@ export default function AuthPanel({ isArabic }: { isArabic: boolean }) {
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
     if (!url || !key) {
-      setMessage(t("Add Supabase public URL and anon key to enable accounts.", "أضف رابط Supabase ومفتاح anon العام لتفعيل الحسابات."));
+      setMessage(isArabic ? "أضف رابط Supabase ومفتاح anon العام لتفعيل الحسابات." : "Add Supabase public URL and anon key to enable accounts.");
       return;
     }
     const supabase = createClient();
