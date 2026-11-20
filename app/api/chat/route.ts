@@ -17,14 +17,19 @@ function isChatMessage(value: unknown): value is ChatMessage {
 }
 
 export async function POST(request: Request) {
-  let body: ChatRequest;
+  let payload: unknown;
 
   try {
-    body = (await request.json()) as ChatRequest;
+    payload = await request.json();
   } catch {
     return NextResponse.json({ error: "Invalid JSON request." }, { status: 400 });
   }
 
+  if (!payload || typeof payload !== "object" || !("messages" in payload)) {
+    return NextResponse.json({ error: "Request must include a messages array." }, { status: 400 });
+  }
+
+  const body = payload as ChatRequest;
   if (!Array.isArray(body.messages) || body.messages.length === 0 || body.messages.length > MAX_MESSAGES) {
     return NextResponse.json({ error: `Send between 1 and ${MAX_MESSAGES} messages.` }, { status: 400 });
   }
@@ -34,7 +39,7 @@ export async function POST(request: Request) {
   }
 
   const apiKey = process.env.AI_API_KEY;
-  const baseUrl = (process.env.AI_BASE_URL || "https://api.openai.com/v1").replace(/\/+$/, "");
+  const baseUrl = (process.env.AI_BASE_URL || "https://api.openai.com/v1").replace(/\\/+$/, "");
   const model = process.env.AI_MODEL || "gpt-4o-mini";
 
   if (!apiKey) {
