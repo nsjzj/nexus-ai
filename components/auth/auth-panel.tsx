@@ -95,7 +95,7 @@ export default function AuthPanel({ isArabic }: { isArabic: boolean }) {
         </form>
       )}
       {message && <p className="settings-message" role="status">{message}</p>}
-      <p className="settings-note">{t("Your password is handled by Supabase Auth. NEXUS does not store it. Cloud project/chat sync is not connected yet.", "تتم إدارة كلمة المرور عبر Supabase Auth ولا يخزنها NEXUS. مزامنة المشاريع والمحادثات لم تُربط بعد.")}</p>
+      <p className="settings-note">{t("Your password is handled by Supabase Auth. NEXUS does not store it. Signed-in projects and conversations sync when your Supabase project is configured.", "تتم إدارة كلمة المرور عبر Supabase Auth ولا يخزنها NEXUS. تتزامن المشاريع والمحادثات عند إعداد مشروع Supabase.")}</p>
     </section>
   );
 }
