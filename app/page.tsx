@@ -290,14 +290,62 @@ export default function Home() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ messages: contextMessages }),
       });
-      let data: { message?: ChatMessage; error?: string };
-      try {
-        data = (await response.json()) as { message?: ChatMessage; error?: string };
-      } catch {
-        throw new Error("The server returned an invalid response. Please try again.");
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null) as { error?: string } | null;
+        throw new Error(errorData?.error || "Something went wrong.");
       }
-      if (!response.ok || !data.message) throw new Error(data.error || "Something went wrong.");
-      const completed = [...nextMessages, data.message];
+
+      let assistantContent = "";
+      if (response.headers.get("content-type")?.includes("text/event-stream") && response.body) {
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+        const processEvent = (eventBlock: string) => {
+          const data = eventBlock.split("\n")
+            .filter((line) => line.startsWith("data:"))
+            .map((line) => line.slice(5).trim())
+            .join("\n");
+          if (!data || data === "[DONE]") return;
+          let chunk: unknown;
+          try {
+            chunk = JSON.parse(data);
+          } catch {
+            throw new Error("The AI provider sent an invalid stream event.");
+          }
+          if (!chunk || typeof chunk !== "object" || !("choices" in chunk) || !Array.isArray(chunk.choices)) return;
+          const choice = chunk.choices[0];
+          if (!choice || typeof choice !== "object" || !("delta" in choice) || !choice.delta || typeof choice.delta !== "object") return;
+          const delta = "content" in choice.delta ? choice.delta.content : null;
+          if (typeof delta === "string" && delta) {
+            assistantContent += delta;
+            setMessages([...nextMessages, { role: "assistant", content: assistantContent }]);
+          }
+        };
+
+        while (true) {
+          const { done, value } = await reader.read();
+          buffer += decoder.decode(value, { stream: !done });
+          const events = buffer.split("\n\n");
+          buffer = events.pop() || "";
+          for (const eventBlock of events) processEvent(eventBlock);
+          if (done) break;
+        }
+        if (buffer.trim()) processEvent(buffer);
+      } else {
+        let data: { message?: ChatMessage; error?: string };
+        try {
+          data = (await response.json()) as { message?: ChatMessage; error?: string };
+        } catch {
+          throw new Error("The server returned an invalid response. Please try again.");
+        }
+        if (!data.message || typeof data.message.content !== "string") {
+          throw new Error(data.error || "The AI provider returned an invalid response.");
+        }
+        assistantContent = data.message.content;
+      }
+
+      if (!assistantContent.trim()) throw new Error("The AI provider returned an empty response.");
+      const completed = [...nextMessages, { role: "assistant" as const, content: assistantContent }];
       setMessages(completed);
       saveConversation(completed, savedAt);
     } catch (error) {
