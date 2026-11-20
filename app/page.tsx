@@ -1,5 +1,7 @@
 "use client";
 
+/* eslint-disable react-hooks/set-state-in-effect -- hydrate local state and account state from browser storage/auth. */
+
 import { FormEvent, KeyboardEvent, useEffect, useRef, useState } from "react";
 import type { ChatMessage } from "@/lib/ai/types";
 import ProjectWorkspace from "@/components/projects/project-workspace";
@@ -243,14 +245,14 @@ export default function Home() {
     }
   }
 
-  function saveConversation(nextMessages: ChatMessage[]) {
+  function saveConversation(nextMessages: ChatMessage[], updatedAt: number) {
     const firstUser = nextMessages.find((message) => message.role === "user")?.content || "New conversation";
     const id = activeConversationId || crypto.randomUUID();
     const item: SavedConversation = {
       id,
       title: firstUser.slice(0, 42),
       messages: nextMessages,
-      updatedAt: Date.now(),
+      updatedAt,
     };
     setActiveConversationId(id);
     persist([item, ...conversations.filter((conversation) => conversation.id !== id)].slice(0, 30));
@@ -269,6 +271,7 @@ export default function Home() {
     const text = input.trim();
     if (!text || busy || !cloudReady) return;
 
+    const savedAt = Date.now();
     const nextMessages: ChatMessage[] = [...messages.filter((m) => m !== welcome), { role: "user", content: text }];
     setMessages([...nextMessages]);
     setInput("");
@@ -290,9 +293,9 @@ export default function Home() {
       if (!response.ok || !data.message) throw new Error(data.error || "Something went wrong.");
       const completed = [...nextMessages, data.message];
       setMessages(completed);
-      saveConversation(completed);
+      saveConversation(completed, savedAt);
     } catch (error) {
-      saveConversation(nextMessages);
+      saveConversation(nextMessages, savedAt);
       setNotice(error instanceof Error ? error.message : "Could not send the message.");
     } finally {
       setBusy(false);
