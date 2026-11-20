@@ -106,7 +106,7 @@ The checks above are documented commands; run them in a Node.js environment befo
 1. **Foundation (current):** responsive app shell, language toggle, AI Hub UI, server-side provider adapter.
 2. **AI Hub:** provider/model management, streaming responses, conversation search and export.
 3. **Project Memory (in progress):** conversation cloud sync, project notes and files, per-project instructions, and context retrieval.
-4. **GitHub Lab:** repository browser, code review, test execution, branch-based patches, and pull requests.
+4. **GitHub Lab:** authenticated private-repository access, source browsing, code review, test execution, branch-based patches, and pull requests.
 5. **Automation:** multi-step workflows, approvals for sensitive actions, activity history, and rollback.
 6. **Deployment & security:** hosted deployment, authentication, per-user data isolation, rate limits, and audit logging.
 
