@@ -1,31 +1,34 @@
 # NEXUS AI
 
-**Your All-in-One AI Workspace** — a mobile-first workspace designed to bring AI conversations and developer workflows together.
+**Your All-in-One AI Workspace** — a mobile-first workspace designed to make AI and developer tools easier to use.
 
-> Current status: Foundation + AI Hub + Supabase email authentication and project cloud sync scaffolding. A Supabase project and provider environment still need to be configured; GitHub Lab, automations, and production deployment are not complete.
+> Project status: active foundation build. The AI Hub, device-local chat, optional per-account chat/project sync, Supabase email authentication, and read-only public GitHub Lab are implemented in the development branch. A real Supabase project, AI provider credentials, and deployment are still required. Automated checks have not yet been verified.
 
 ## What's included
 
-- Responsive workspace shell with AI Hub, Projects, GitHub Lab, Automations, and Settings navigation.
-- Projects workspace: create, search, pause/resume, and delete project cards, with local storage and optional per-user Supabase cloud sync when configured and signed in.
-- English and Arabic interface toggle, including RTL layout.
-- Local conversation history in the current browser (up to 30 saved conversations).
-- Server-side OpenAI-compatible chat endpoint.
-- Provider configuration through environment variables; API keys stay on the server.
-- Basic request validation, provider error handling, and request timeout.
-- Supabase SQL migration for profiles, projects, conversations, and messages with per-user Row Level Security.
-- Supabase email/password authentication UI, SSR session helpers, and auth callback route.
-- Separate `nexus-ai-foundation` branch so the default `main` branch remains untouched.
+- Responsive, mobile-first workspace with Arabic/English UI and right-to-left layout.
+- AI Hub using an OpenAI-compatible server-side chat endpoint.
+- Provider secrets stay on the server; the browser only calls the NEXUS API.
+- Basic request validation, body-size limits, timeout handling, safer provider errors, and a best-effort per-instance request limiter.
+- A response token ceiling to help bound provider latency and usage cost.
+- Local conversation history for signed-out users.
+- Per-account conversation history sync when Supabase is configured and the user is signed in.
+- Projects workspace with create, search, pause/resume, and delete actions.
+- Per-account cloud project sync, with account-specific browser caches.
+- Supabase email/password sign-up, sign-in, sign-out, SSR session helpers, and auth callback route.
+- Read-only GitHub Lab for public repository metadata and README inspection.
+- No external font download on the critical page-load path.
 
 ## Requirements
 
 - Node.js 20.9 or newer
 - npm
-- An API key for an OpenAI-compatible provider, or a reachable local OpenAI-compatible endpoint such as Ollama.
+- An API key for an OpenAI-compatible provider, or a reachable local OpenAI-compatible endpoint such as Ollama
+- A Supabase project for accounts and cloud sync
 
 ## Run locally
 
-1. Clone the repository and switch to the foundation branch:
+1. Clone the repository and switch to the development branch:
 
    ```bash
    git clone https://github.com/nsjzj/nexus-ai.git
@@ -39,23 +42,29 @@
    npm install
    ```
 
-3. Create your local environment file:
+3. Copy the environment template:
 
    ```bash
    cp .env.example .env.local
    ```
 
-4. Edit `.env.local` and add your provider settings:
+4. Configure the AI provider and Supabase values in `.env.local`:
 
    ```env
    AI_BASE_URL=https://api.openai.com/v1
    AI_API_KEY=your_key_here
    AI_MODEL=gpt-4o-mini
+   NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_or_publishable_key
    ```
 
-   Never commit `.env.local` or expose provider keys in client-side code.
+   Never commit `.env.local`, expose provider keys in client code, or place a Supabase service-role key in a `NEXT_PUBLIC_*` variable.
 
-5. Start the development server:
+5. Apply `supabase/migrations/0001_initial_schema.sql` in the Supabase SQL Editor or through the Supabase CLI.
+
+6. In Supabase Auth, set the site URL and allowed redirect URLs. Include `http://localhost:3000/auth/callback` for local development and your production origin plus `/auth/callback` after deployment.
+
+7. Start the app:
 
    ```bash
    npm run dev
@@ -63,33 +72,42 @@
 
    Open http://localhost:3000.
 
-## Provider configuration
+## AI provider configuration
 
-The chat route uses the OpenAI-compatible `POST /chat/completions` format.
+The server route uses the OpenAI-compatible `POST /chat/completions` format.
 
-- OpenAI-compatible hosted provider: set `AI_BASE_URL`, `AI_API_KEY`, and `AI_MODEL`.
-- Ollama: use a reachable Ollama endpoint, for example `http://localhost:11434/v1`, set `AI_API_KEY=ollama` if required by the local endpoint, and choose a model installed locally.
-- The browser calls only the NEXUS server route. The provider secret is not sent to the browser.
+- Hosted provider: configure `AI_BASE_URL`, `AI_API_KEY`, and `AI_MODEL`.
+- Ollama: use a reachable Ollama endpoint such as `http://localhost:11434/v1`, set the key value required by that endpoint, and select a model installed locally.
+- Some hosted providers charge for API usage. NEXUS AI does not currently add a subscription, but provider usage may cost money.
 
-Some hosted AI providers charge for API usage. NEXUS AI itself does not currently add a subscription or charge.
+The current API limits request size and message count and caps generated output at 1,200 tokens. This is a conservative default, not a guarantee of low latency: response speed depends on the selected model, provider, network, and hosting region.
 
-## Supabase Auth setup
+## Supabase data and account isolation
 
-The settings screen includes email/password sign-up and sign-in through Supabase Auth. The SSR browser/server clients, session-refresh middleware, and OAuth/email callback route are included. To enable this feature:
+The migration creates profiles, projects, conversations, and messages with Row Level Security policies tied to the authenticated user.
 
-1. Create a Supabase project.
-2. Apply `supabase/migrations/0001_initial_schema.sql` using the SQL Editor or Supabase CLI.
-3. Add `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` to `.env.local` and your hosting environment.
-4. In Supabase Auth, configure the site URL and redirect URL to include `http://localhost:3000/auth/callback` for local development and your deployed origin plus `/auth/callback` for production.
-5. Restart the app and open Settings to create an account or sign in.
+- Signed-in users load and save conversations and projects to their own Supabase records.
+- Signed-in browser caches are keyed by account.
+- Signed-out conversations and projects remain local to the current browser.
+- Existing signed-out local history is not automatically copied into an account. This avoids accidentally transferring one person's device history into another account.
+- Cloud sync requires the migration to be applied and the Supabase URL/key and Auth redirect settings to be configured.
 
-Only the public anon/publishable key belongs in `NEXT_PUBLIC_*`. Never put a Supabase service-role key in browser-visible environment variables. The account panel authenticates users. The Projects screen loads and saves project cards to Supabase for signed-in users, and keeps a local copy. Chat history is still local-only.
+The Supabase Auth and cloud-sync code has not yet been verified against a live project. Do not treat cloud sync as production-proven until a configured test account has been used to verify sign-up, sign-in, sign-out, cross-device retrieval, and data isolation.
 
-## Cloud database preparation
+## GitHub Lab scope
 
-A starter Supabase migration is available at `supabase/migrations/0001_initial_schema.sql`. It creates user profiles, projects, conversations, and messages, enables Row Level Security, and scopes records to the signed-in user. This is a schema foundation only: it has **not** been applied to a Supabase project. The app includes Supabase Auth and project-sync code, but these features remain unverified until configured against a real Supabase project.
+The current GitHub Lab version reads public repository metadata and README files. It does not access private repositories, clone or execute source code, review entire codebases, create branches, or open pull requests. Those capabilities require a secure GitHub authorization flow and explicit approval before making changes.
 
-To use it later, create a Supabase project, review the SQL, and apply the migration with the Supabase CLI or SQL Editor. Keep the Supabase service-role key server-only; never expose it in browser code.
+## Performance and reliability
+
+The app avoids blocking remote font downloads and animated chat auto-scroll. The chat route has request limits and a provider timeout. These measures reduce avoidable work, but they do not guarantee a lag-free experience.
+
+Before a public multi-instance launch:
+- Replace the in-memory, per-instance rate limiter with a shared limiter.
+- Add provider usage budgets and abuse monitoring.
+- Verify authentication, RLS, account switching, and cross-user isolation.
+- Run the typecheck, lint, and production build successfully.
+- Perform real-device and network testing.
 
 ## Quality checks
 
@@ -99,24 +117,24 @@ npm run lint
 npm run build
 ```
 
-The checks above are documented commands; run them in a Node.js environment before treating a build as production-ready.
+GitHub Actions is configured to run these commands. Their success has not yet been confirmed for the current branch.
 
 ## Roadmap
 
-1. **Foundation (current):** responsive app shell, language toggle, AI Hub UI, server-side provider adapter.
-2. **AI Hub:** provider/model management, streaming responses, conversation search and export.
-3. **Project Memory (in progress):** conversation cloud sync, project notes and files, per-project instructions, and context retrieval.
-4. **GitHub Lab:** authenticated private-repository access, source browsing, code review, test execution, branch-based patches, and pull requests.
-5. **Automation:** multi-step workflows, approvals for sensitive actions, activity history, and rollback.
-6. **Deployment & security:** hosted deployment, authentication, per-user data isolation, rate limits, and audit logging.
+1. **Foundation:** responsive UI, language support, AI Hub, server-side provider adapter.
+2. **AI Hub:** streaming output, model selection, conversation search/export, usage controls.
+3. **Project Memory:** project notes/files, per-project instructions, context retrieval.
+4. **GitHub Lab:** secure private-repository connection, source browsing, code review, branch-based patches, and pull requests with user approval.
+5. **Automation:** multi-step workflows, approval checkpoints, activity history, and rollback.
+6. **Release readiness:** shared rate limits, cost controls, security review, monitoring, and hosted deployment.
 
-## Safety and privacy notes
+## Safety and privacy
 
-- Keep API keys in server environment variables only.
-- Do not add secrets, personal access tokens, or private credentials to Git.
-- The current conversation history is stored in the browser's local storage on that device. It is not yet synced between devices or protected by user accounts.
-- Project cards use local storage when signed out and can sync to Supabase when signed in and configured. Chat history syncs to the signed-in user's Supabase account when configured; signed-out history stays on the current device. Project files, GitHub operations, and automation are not yet implemented.
+- Keep provider and service-role keys on the server only.
+- Do not commit secrets, personal access tokens, or private credentials.
 - Review AI-generated output before using it in important systems.
+- Never execute untrusted repository code automatically.
+- Do not deploy as a public multi-user service until authentication, RLS, abuse controls, provider budgets, and operational monitoring are verified.
 
 ## License
 
