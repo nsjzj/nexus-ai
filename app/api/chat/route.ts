@@ -48,6 +48,12 @@ function rateLimited(key: string): boolean {
     if (bucket.resetAt <= now) requestBuckets.delete(bucketKey);
   }
 
+  // Bound memory if clients rotate or spoof forwarding headers.
+  if (!requestBuckets.has(key) && requestBuckets.size >= 5_000) {
+    const oldestKey = requestBuckets.keys().next().value;
+    if (oldestKey) requestBuckets.delete(oldestKey);
+  }
+
   const bucket = requestBuckets.get(key);
   if (!bucket || bucket.resetAt <= now) {
     requestBuckets.set(key, { count: 1, resetAt: now + WINDOW_MS });
