@@ -7,6 +7,21 @@ import ProjectWorkspace from "@/components/projects/project-workspace";
 type Section = "hub" | "projects" | "github" | "automations" | "settings";
 type SavedConversation = { id: string; title: string; messages: ChatMessage[]; updatedAt: number };
 
+function isSavedConversation(value: unknown): value is SavedConversation {
+  if (!value || typeof value !== "object") return false;
+  const item = value as Record<string, unknown>;
+  return typeof item.id === "string" &&
+    typeof item.title === "string" &&
+    typeof item.updatedAt === "number" &&
+    Array.isArray(item.messages) &&
+    item.messages.every((message) =>
+      !!message &&
+      typeof message === "object" &&
+      ["system", "user", "assistant"].includes((message as Record<string, unknown>).role as string) &&
+      typeof (message as Record<string, unknown>).content === "string"
+    );
+}
+
 const STORAGE_KEY = "nexus-ai-conversations-v1";
 const labels: Record<Section, { en: string; ar: string; icon: string }> = {
   hub: { en: "AI Hub", ar: "مركز الذكاء", icon: "✳" },
@@ -37,12 +52,19 @@ export default function Home() {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
-        const parsed = JSON.parse(saved) as SavedConversation[];
-        setConversations(parsed);
-        if (parsed[0]?.messages?.length) setMessages(parsed[0].messages);
+        const parsed: unknown = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.every(isSavedConversation)) {
+          setConversations(parsed);
+          if (parsed[0]?.messages.length) {
+            setActiveConversationId(parsed[0].id);
+            setMessages(parsed[0].messages);
+          }
+        } else {
+          localStorage.removeItem(STORAGE_KEY);
+        }
       }
     } catch {
-      localStorage.removeItem(STORAGE_KEY);
+      try { localStorage.removeItem(STORAGE_KEY); } catch { /* Storage may be disabled. */ }
     }
   }, []);
 
@@ -52,7 +74,14 @@ export default function Home() {
 
   function persist(next: SavedConversation[]) {
     setConversations(next);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    } catch {
+      setNotice(copy(
+        "This conversation is available until you close this tab, but browser storage is unavailable.",
+        "المحادثة متاحة إلى أن تغلق علامة التبويب، لكن التخزين في المتصفح غير متاح."
+      ));
+    }
   }
 
   function saveConversation(nextMessages: ChatMessage[]) {
