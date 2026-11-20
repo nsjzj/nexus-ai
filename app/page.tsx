@@ -3,6 +3,7 @@
 import { FormEvent, KeyboardEvent, useEffect, useRef, useState } from "react";
 import type { ChatMessage } from "@/lib/ai/types";
 import ProjectWorkspace from "@/components/projects/project-workspace";
+import AuthPanel from "@/components/auth/auth-panel";
 
 type Section = "hub" | "projects" | "github" | "automations" | "settings";
 type SavedConversation = { id: string; title: string; messages: ChatMessage[]; updatedAt: number };
@@ -203,6 +204,16 @@ export default function Home() {
 
         {section === "projects" ? (
           <ProjectWorkspace isArabic={isArabic} onBack={() => setSection("hub")} />
+        ) : section === "settings" ? (
+          <div className="hub-layout">
+            <div className="page-heading">
+              <div><div className="eyebrow">{copy("WORKSPACE PREFERENCES", "تفضيلات مساحة العمل")}</div>
+                <h1>{copy("Settings and account.", "الإعدادات والحساب.")}</h1>
+                <p>{copy("Manage your account connection and prepare for cloud features.", "أدر اتصال حسابك واستعد لميزات السحابة.")}</p>
+              </div>
+            </div>
+            <AuthPanel isArabic={isArabic} />
+          </div>
         ) : section === "hub" ? (
           <div className="hub-layout">
             <div className="page-heading">
