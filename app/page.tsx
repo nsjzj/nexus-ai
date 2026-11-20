@@ -54,6 +54,7 @@ export default function Home() {
   const [authResolved, setAuthResolved] = useState(false);
   const [cloudReady, setCloudReady] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const requestController = useRef<AbortController | null>(null);
   const isArabic = language === "ar";
 
   useEffect(() => {
@@ -88,6 +89,9 @@ export default function Home() {
     const supabase = createClient();
     void supabase.auth.getUser().then(({ data }) => {
       if (active) {
+        requestController.current?.abort();
+        requestController.current = null;
+        setBusy(false);
         setCloudReady(false);
         setConversations([]);
         setActiveConversationId(null);
@@ -283,12 +287,15 @@ export default function Home() {
     setInput("");
     setBusy(true);
     setNotice("");
+    const controller = new AbortController();
+    requestController.current = controller;
 
     try {
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ messages: contextMessages }),
+        signal: controller.signal,
       });
       if (!response.ok) {
         const errorData = await response.json().catch(() => null) as { error?: string } | null;
@@ -349,9 +356,11 @@ export default function Home() {
       setMessages(completed);
       saveConversation(completed, savedAt);
     } catch (error) {
+      if (error instanceof Error && error.name === "AbortError") return;
       saveConversation(nextMessages, savedAt);
       setNotice(error instanceof Error ? error.message : "Could not send the message.");
     } finally {
+      if (requestController.current === controller) requestController.current = null;
       setBusy(false);
     }
   }
