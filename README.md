@@ -7,6 +7,7 @@
 ## What's included
 
 - Responsive workspace shell with AI Hub, Projects, GitHub Lab, Automations, and Settings navigation.
+- Local Projects workspace: create, search, pause/resume, and delete project cards.
 - English and Arabic interface toggle, including RTL layout.
 - Local conversation history in the current browser (up to 30 saved conversations).
 - Server-side OpenAI-compatible chat endpoint.
@@ -84,7 +85,7 @@ The checks above are documented commands; run them in a Node.js environment befo
 
 1. **Foundation (current):** responsive app shell, language toggle, AI Hub UI, server-side provider adapter.
 2. **AI Hub:** provider/model management, streaming responses, conversation search and export.
-3. **Project Memory:** projects, notes, files, per-project instructions, and context retrieval.
+3. **Project Memory (in progress):** cloud sync, project notes and files, per-project instructions, and context retrieval.
 4. **GitHub Lab:** repository browser, code review, test execution, branch-based patches, and pull requests.
 5. **Automation:** multi-step workflows, approvals for sensitive actions, activity history, and rollback.
 6. **Deployment & security:** hosted deployment, authentication, per-user data isolation, rate limits, and audit logging.
@@ -94,7 +95,7 @@ The checks above are documented commands; run them in a Node.js environment befo
 - Keep API keys in server environment variables only.
 - Do not add secrets, personal access tokens, or private credentials to Git.
 - The current conversation history is stored in the browser's local storage on that device. It is not yet synced between devices or protected by user accounts.
-- Projects, GitHub operations, and automation navigation are currently interface placeholders, not completed integrations.
+- Project cards currently use this browser's local storage. Cloud sync, project files, GitHub operations, and automation are not yet implemented.
 - Review AI-generated output before using it in important systems.
 
 ## License
