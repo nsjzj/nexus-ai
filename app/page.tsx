@@ -479,16 +479,7 @@ export default function Home() {
             </div>
             <p className="footnote">{userId ? copy("Messages are sent to the configured AI provider. Chats sync to your Supabase account. AI can make mistakes; review important information.", "تُرسل رسائلك إلى مزوّد الذكاء الاصطناعي المُعدّ، وتتزامن المحادثات مع حساب Supabase. قد يخطئ الذكاء الاصطناعي؛ راجع المعلومات المهمة.") : copy("Messages are sent to the configured AI provider. Chats stay in this browser. Sign in to enable cloud sync.", "تُرسل رسائلك إلى مزوّد الذكاء الاصطناعي المُعدّ، وتبقى المحادثات في هذا المتصفح. سجّل الدخول لتفعيل المزامنة السحابية.")}</p>
           </div>
-        ) : (
-          <div className="placeholder-page">
-            <div className="placeholder-icon">{labels[section].icon}</div>
-            <div className="eyebrow">{copy("COMING IN THE NEXT BUILD", "في الإصدار القادم")}</div>
-            <h1>{labels[section][language]}</h1>
-            <p>{copy("Build repeatable multi-step workflows with approval checkpoints.", "أنشئ مهاماً متسلسلة قابلة للتكرار مع نقاط موافقة.")}</p>
-            <span className="coming-pill"><i />{copy("Foundation phase", "مرحلة التأسيس")}</span>
-            <button className="back-button" onClick={() => setSection("hub")}>{copy("Back to AI Hub", "العودة إلى مركز الذكاء")}</button>
-          </div>
-        )}
+        ) : null}
       </section>
     </main>
   );
