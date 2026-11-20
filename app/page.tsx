@@ -155,10 +155,10 @@ export default function Home() {
         const ids = (rows ?? []).map((row) => row.id);
         const messageRows = ids.length
           ? await supabase.from("messages")
-              .select("conversation_id,role,content,created_at")
+              .select("conversation_id,role,content,position")
               .eq("user_id", userId)
               .in("conversation_id", ids)
-              .order("created_at", { ascending: true })
+              .order("position", { ascending: true })
           : { data: [], error: null };
         if (messageRows.error) throw messageRows.error;
         const cloudItems: SavedConversation[] = (rows ?? []).map((row) => ({
@@ -222,21 +222,19 @@ export default function Home() {
       }, { onConflict: "id" });
       if (conversationError) throw conversationError;
 
-      const { error: deleteError } = await supabase.from("messages")
-        .delete().eq("conversation_id", item.id).eq("user_id", userId);
-      if (deleteError) throw deleteError;
-
       if (item.messages.length) {
-        const { error: insertError } = await supabase.from("messages").insert(
+        const { error: messageError } = await supabase.from("messages").upsert(
           item.messages.filter((message) => message.role === "user" || message.role === "assistant")
-            .map((message) => ({
+            .map((message, position) => ({
               conversation_id: item.id,
               user_id: userId,
+              position,
               role: message.role,
               content: message.content.slice(0, 12000),
-            }))
+            })),
+          { onConflict: "conversation_id,position" },
         );
-        if (insertError) throw insertError;
+        if (messageError) throw messageError;
       }
     } catch (error) {
       setNotice(error instanceof Error
@@ -266,12 +264,12 @@ export default function Home() {
     setNotice("");
   }
 
-  async function sendMessage(event?: FormEvent) {
+  async function sendMessage(event: FormEvent | KeyboardEvent<HTMLTextAreaElement>) {
     event?.preventDefault();
     const text = input.trim();
     if (!text || busy || !cloudReady) return;
 
-    const savedAt = Date.now();
+    const savedAt = Math.round(event.timeStamp + performance.timeOrigin);
     const nextMessages: ChatMessage[] = [...messages.filter((m) => m !== welcome), { role: "user", content: text }];
     setMessages([...nextMessages]);
     setInput("");
@@ -305,7 +303,7 @@ export default function Home() {
   function onComposerKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
     if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault();
-      void sendMessage();
+      void sendMessage(event);
     }
   }
 
