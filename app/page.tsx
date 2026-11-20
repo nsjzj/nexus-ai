@@ -2,6 +2,7 @@
 
 import { FormEvent, KeyboardEvent, useEffect, useRef, useState } from "react";
 import type { ChatMessage } from "@/lib/ai/types";
+import ProjectWorkspace from "@/components/projects/project-workspace";
 
 type Section = "hub" | "projects" | "github" | "automations" | "settings";
 type SavedConversation = { id: string; title: string; messages: ChatMessage[]; updatedAt: number };
@@ -156,7 +157,9 @@ export default function Home() {
           </div>
         </header>
 
-        {section === "hub" ? (
+        {section === "projects" ? (
+          <ProjectWorkspace isArabic={isArabic} onBack={() => setSection("hub")} />
+        ) : section === "hub" ? (
           <div className="hub-layout">
             <div className="page-heading">
               <div><div className="eyebrow">{copy("YOUR AI WORKSPACE", "مساحة الذكاء الخاصة بك")}</div>
