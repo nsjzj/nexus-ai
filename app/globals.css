@@ -34,3 +34,34 @@ button{cursor:pointer}
 .rtl{font-family:'Noto Sans Arabic','DM Sans',sans-serif}.rtl .page-heading h1,.rtl .placeholder-page h1{letter-spacing:0}.rtl .message-bubble p,.rtl .composer textarea{line-height:1.9}.rtl .message-row{direction:rtl}.rtl .user-row{direction:ltr}.rtl .topbar{direction:rtl}.rtl .top-actions{direction:ltr}
 @media(max-width:800px){.sidebar{width:210px;padding:18px 12px}.hub-layout{padding:34px 22px}.topbar{padding:0 22px}.page-heading{align-items:flex-start;flex-direction:column}.model-pill{align-self:flex-start}}
 @media(max-width:600px){.shell{display:block}.sidebar{width:100%;height:auto;padding:12px 14px;border-right:0;border-bottom:1px solid var(--line);display:block}.rtl .sidebar{border-left:0}.brand{padding:0 3px 12px}.brand-mark{width:32px;height:32px}.new-chat{position:absolute;top:16px;right:15px;width:42px;padding:0;font-size:0;text-align:center}.new-chat span{font-size:22px;margin:0}.rtl .new-chat{right:auto;left:15px}.nav-label,.sidebar-bottom{display:none}.nav-list{display:flex;overflow-x:auto;gap:5px;padding-bottom:1px}.nav-item{white-space:nowrap;padding:8px 10px;font-size:11px;gap:7px}.nav-icon{font-size:14px}.main-panel{min-height:calc(100vh - 105px)}.topbar{height:49px;padding:0 16px}.connection{display:none}.hub-layout{padding:28px 14px 20px}.page-heading h1{font-size:25px}.page-heading p{font-size:11px}.messages{min-height:310px;max-height:48vh;padding:17px 12px}.message-row{max-width:96%}.message-bubble p{font-size:11px}.chat-header{padding:0 12px}.composer{margin:0 9px 9px}.quick-prompts{gap:6px}.quick-prompts button{font-size:9px;padding:8px}.footnote{font-size:8px}.placeholder-page{min-height:60vh}}
+
+
+.project-workspace{max-width:1050px}
+.project-create-trigger{width:42px;height:42px;flex-shrink:0;font-size:25px}
+.project-form{display:grid;gap:14px;border:1px solid #343a50;background:#111624;padding:18px;border-radius:12px;margin-bottom:20px}
+.project-form label{display:grid;gap:7px;color:#aeb6ca;font-size:11px}
+.project-form input,.project-form textarea,.project-search{width:100%;border:1px solid #30364b;background:#0b0f19;color:#edf0f8;border-radius:8px;padding:11px 12px;outline:0;font-size:12px}
+.project-form input:focus,.project-form textarea:focus,.project-search:focus{border-color:#8175cb}
+.project-form textarea{resize:vertical}
+.project-form-actions{display:flex;justify-content:flex-end;gap:9px}
+.project-primary{border:1px solid #776ac4;background:#7668ca;color:white;padding:10px 14px;border-radius:8px;font-size:11px;font-weight:600}
+.project-primary:disabled{opacity:.45;cursor:not-allowed}
+.project-toolbar{display:flex;align-items:center;gap:14px;margin-bottom:16px}
+.project-search{max-width:400px}
+.project-count{font-size:10px;color:#818ba2;white-space:nowrap}
+.project-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:13px}
+.project-card{border:1px solid #292e43;background:linear-gradient(155deg,#151a2a,#101421);border-radius:12px;padding:16px;min-width:0}
+.project-card-top{display:flex;align-items:center;justify-content:space-between}
+.project-card-icon{width:32px;height:32px;display:grid;place-items:center;border-radius:9px;background:#25213e;color:#b6aaff}
+.project-status{font-size:9px;padding:5px 8px;border-radius:20px;background:#16342e;color:#8de0c5}
+.project-status.paused{background:#34303a;color:#c2b6d0}
+.project-card h2{font-size:15px;margin:16px 0 7px;overflow-wrap:anywhere}
+.project-card p{font-size:11px;line-height:1.7;color:#929bb1;min-height:38px;overflow-wrap:anywhere}
+.project-card-footer{border-top:1px solid #292e43;padding-top:12px;margin-top:15px;display:flex;align-items:center;justify-content:space-between;gap:8px;color:#778198;font-size:9px}
+.project-card-footer div{display:flex;gap:10px}
+.project-card-footer button{border:0;background:transparent;color:#bcb3ff;font-size:10px;padding:3px}
+.project-card-footer .danger-text{color:#e39aa5}
+.project-empty{min-height:250px;border:1px dashed #343a50;border-radius:13px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:25px}
+.project-empty h2{font-size:16px;margin:0 0 7px}.project-empty p{max-width:390px;color:#929bb1;font-size:11px;line-height:1.7;margin:0 0 16px}
+.project-back{display:block;margin-inline:auto}
+@media(max-width:600px){.project-grid{grid-template-columns:1fr}.project-toolbar{align-items:stretch}.project-search{max-width:none}.project-form{padding:13px}}
