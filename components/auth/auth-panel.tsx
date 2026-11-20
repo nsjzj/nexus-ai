@@ -28,8 +28,7 @@ export default function AuthPanel({ isArabic }: { isArabic: boolean }) {
     return () => listener.subscription.unsubscribe();
   }, [isArabic]);
 
-  async function submit(event: FormEvent, mode: "sign-in" | "sign-up") {
-    event.preventDefault();
+  async function authenticate(mode: "sign-in" | "sign-up") {
     setBusy(true);
     setMessage("");
     try {
@@ -42,6 +41,7 @@ export default function AuthPanel({ isArabic }: { isArabic: boolean }) {
             options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
           });
       if (result.error) throw result.error;
+      setPassword("");
       if (mode === "sign-up" && !result.data.session) {
         setMessage(t("Check your email to confirm your account, then sign in.", "تحقق من بريدك لتأكيد الحساب، ثم سجّل الدخول."));
       } else {
@@ -81,7 +81,7 @@ export default function AuthPanel({ isArabic }: { isArabic: boolean }) {
           <button className="project-primary" disabled={busy} onClick={signOut}>{t("Sign out", "تسجيل الخروج")}</button>
         </div>
       ) : (
-        <form className="project-form" onSubmit={(event) => submit(event, "sign-in")}>
+        <form className="project-form" onSubmit={(event: FormEvent) => { event.preventDefault(); void authenticate("sign-in"); }}>
           <label>{t("Email", "البريد الإلكتروني")}
             <input type="email" autoComplete="email" required value={email} onChange={(event) => setEmail(event.target.value)} />
           </label>
@@ -89,7 +89,7 @@ export default function AuthPanel({ isArabic }: { isArabic: boolean }) {
             <input type="password" autoComplete="current-password" minLength={8} required value={password} onChange={(event) => setPassword(event.target.value)} />
           </label>
           <div className="project-form-actions">
-            <button className="back-button" type="button" disabled={busy || !email.trim() || password.length < 8} onClick={(event) => void submit(event as unknown as FormEvent, "sign-up")}>{t("Create account", "إنشاء حساب")}</button>
+            <button className="back-button" type="button" disabled={busy || !email.trim() || password.length < 8} onClick={() => void authenticate("sign-up")}>{t("Create account", "إنشاء حساب")}</button>
             <button className="project-primary" type="submit" disabled={busy}>{busy ? t("Please wait…", "انتظر…") : t("Sign in", "تسجيل الدخول")}</button>
           </div>
         </form>
