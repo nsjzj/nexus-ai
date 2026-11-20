@@ -72,6 +72,18 @@ The chat route uses the OpenAI-compatible `POST /chat/completions` format.
 
 Some hosted AI providers charge for API usage. NEXUS AI itself does not currently add a subscription or charge.
 
+## Supabase Auth setup
+
+The settings screen includes email/password sign-up and sign-in through Supabase Auth. The SSR browser/server clients, session-refresh middleware, and OAuth/email callback route are included. To enable this feature:
+
+1. Create a Supabase project.
+2. Apply `supabase/migrations/0001_initial_schema.sql` using the SQL Editor or Supabase CLI.
+3. Add `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` to `.env.local` and your hosting environment.
+4. In Supabase Auth, configure the site URL and redirect URL to include `http://localhost:3000/auth/callback` for local development and your deployed origin plus `/auth/callback` for production.
+5. Restart the app and open Settings to create an account or sign in.
+
+Only the public anon/publishable key belongs in `NEXT_PUBLIC_*`. Never put a Supabase service-role key in browser-visible environment variables. The account panel authenticates users, but project and chat data are not yet synced to the cloud; the UI continues to store them locally.
+
 ## Cloud database preparation
 
 A starter Supabase migration is available at `supabase/migrations/0001_initial_schema.sql`. It creates user profiles, projects, conversations, and messages, enables Row Level Security, and scopes records to the signed-in user. This is a schema foundation only: it has **not** been applied to a Supabase project, and the app is not yet connected to Supabase Auth or cloud storage. Do not treat cloud sync or account support as implemented yet.
