@@ -34,6 +34,7 @@ export default function ProjectWorkspace({ isArabic, onBack }: { isArabic: boole
   const [loaded, setLoaded] = useState(false);
   const [storageWarning, setStorageWarning] = useState("");
   const [userId, setUserId] = useState<string | null>(null);
+  const [authResolved, setAuthResolved] = useState(false);
   const [cloudReady, setCloudReady] = useState(false);
 
   const t = (en: string, ar: string) => (isArabic ? ar : en);
@@ -58,17 +59,27 @@ export default function ProjectWorkspace({ isArabic, onBack }: { isArabic: boole
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
     if (!url || !key) {
+      setAuthResolved(true);
       setCloudReady(true);
       return;
     }
     const supabase = createClient();
     void supabase.auth.getUser().then(({ data }) => {
-      if (active) setUserId(data.user?.id ?? null);
+      if (active) {
+        setUserId(data.user?.id ?? null);
+        setAuthResolved(true);
+      }
+    }).catch(() => {
+      if (active) {
+        setAuthResolved(true);
+        setCloudReady(true);
+      }
     });
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       if (active) {
         setCloudReady(false);
         setUserId(session?.user.id ?? null);
+        setAuthResolved(true);
       }
     });
     return () => {
@@ -78,8 +89,9 @@ export default function ProjectWorkspace({ isArabic, onBack }: { isArabic: boole
   }, []);
 
   useEffect(() => {
-    if (!loaded || !userId) {
-      if (loaded && !userId) setCloudReady(true);
+    if (!loaded || !authResolved) return;
+    if (!userId) {
+      setCloudReady(true);
       return;
     }
     let active = true;
@@ -132,7 +144,7 @@ export default function ProjectWorkspace({ isArabic, onBack }: { isArabic: boole
     return () => { active = false; };
   // Run once after the initial local load or when the signed-in account changes.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loaded, userId]);
+  }, [loaded, userId, authResolved]);
 
   async function persist(next: Project[], removedIds: string[] = []) {
     setProjects(next);
