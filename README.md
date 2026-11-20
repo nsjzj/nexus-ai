@@ -2,7 +2,7 @@
 
 **Your All-in-One AI Workspace** — a mobile-first workspace designed to make AI and developer tools easier to use.
 
-> Project status: active foundation build. The AI Hub, device-local chat, optional per-account chat/project sync, Supabase email authentication, and read-only public GitHub Lab are implemented in the development branch. A real Supabase project, AI provider credentials, and deployment are still required. Automated checks have not yet been verified.
+> Project status: active foundation build on Next.js 16.4.6. The AI Hub, device-local chat, optional per-account chat/project sync, Supabase email authentication, and read-only public GitHub Lab are implemented in the development branch. A real Supabase project, AI provider credentials, and deployment are still required. Automated checks have not yet been verified.
 
 ## What's included
 
