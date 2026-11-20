@@ -86,6 +86,10 @@ export default function Home() {
     const supabase = createClient();
     void supabase.auth.getUser().then(({ data }) => {
       if (active) {
+        setCloudReady(false);
+        setConversations([]);
+        setActiveConversationId(null);
+        setMessages([welcome]);
         setUserId(data.user?.id ?? null);
         setAuthResolved(true);
       }
@@ -98,6 +102,9 @@ export default function Home() {
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       if (active) {
         setCloudReady(false);
+        setConversations([]);
+        setActiveConversationId(null);
+        setMessages([welcome]);
         setUserId(session?.user.id ?? null);
         setAuthResolved(true);
       }
@@ -378,7 +385,7 @@ export default function Home() {
               <div className="chat-header"><div><span className="live-dot" />{copy("NEXUS ASSISTANT", "مساعد NEXUS")}<span className="chat-subtitle">{copy("Private workspace", "مساحة خاصة")}</span></div><button className="icon-button" onClick={newChat} title="New chat">＋</button></div>
               {!cloudReady && <div className="settings-note">{copy("Connecting your chat history…", "جارٍ الاتصال بسجل محادثاتك…")}</div>}
               <div className="messages">
-                {messages.map((message, index) => (
+                {!cloudReady ? <p className="muted">{copy("Loading your conversations…", "جارٍ تحميل محادثاتك…")}</p> : messages.map((message, index) => (
                   <div className={`message-row ${message.role === "user" ? "user-row" : ""}`} key={index}>
                     {message.role === "assistant" && <div className="message-avatar">N</div>}
                     <div className={`message-bubble ${message.role === "user" ? "user-bubble" : ""}`}>
