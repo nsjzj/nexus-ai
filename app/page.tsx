@@ -5,6 +5,7 @@ import type { ChatMessage } from "@/lib/ai/types";
 import ProjectWorkspace from "@/components/projects/project-workspace";
 import AuthPanel from "@/components/auth/auth-panel";
 import GitHubLab from "@/components/github/github-lab";
+import { createClient } from "@/lib/supabase/client";
 
 type Section = "hub" | "projects" | "github" | "automations" | "settings";
 type SavedConversation = { id: string; title: string; messages: ChatMessage[]; updatedAt: number };
@@ -47,6 +48,8 @@ export default function Home() {
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState("");
+  const [userId, setUserId] = useState<string | null>(null);
+  const [cloudReady, setCloudReady] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const isArabic = language === "ar";
 
@@ -71,6 +74,87 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
+    let active = true;
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    if (!url || !key) {
+      setCloudReady(true);
+      return;
+    }
+    const supabase = createClient();
+    void supabase.auth.getUser().then(({ data }) => {
+      if (active) setUserId(data.user?.id ?? null);
+    }).catch(() => {
+      if (active) setCloudReady(true);
+    });
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (active) {
+        setCloudReady(false);
+        setUserId(session?.user.id ?? null);
+      }
+    });
+    return () => {
+      active = false;
+      listener.subscription.unsubscribe();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!userId) {
+      setCloudReady(true);
+      return;
+    }
+    let active = true;
+    setCloudReady(false);
+    void (async () => {
+      try {
+        const supabase = createClient();
+        const { data: rows, error } = await supabase
+          .from("conversations")
+          .select("id,title,updated_at")
+          .eq("user_id", userId)
+          .order("updated_at", { ascending: false })
+          .limit(30);
+        if (error) throw error;
+        const ids = (rows ?? []).map((row) => row.id);
+        const messageRows = ids.length
+          ? await supabase.from("messages")
+              .select("conversation_id,role,content,created_at")
+              .eq("user_id", userId)
+              .in("conversation_id", ids)
+              .order("created_at", { ascending: true })
+          : { data: [], error: null };
+        if (messageRows.error) throw messageRows.error;
+        const cloudItems: SavedConversation[] = (rows ?? []).map((row) => ({
+          id: row.id,
+          title: row.title,
+          updatedAt: new Date(row.updated_at).getTime(),
+          messages: (messageRows.data ?? [])
+            .filter((message) => message.conversation_id === row.id)
+            .map((message) => ({ role: message.role as "user" | "assistant", content: message.content })),
+        })).filter((item) => item.messages.length > 0);
+        if (!active) return;
+        setConversations(cloudItems);
+        try { localStorage.setItem(`${STORAGE_KEY}:${userId}`, JSON.stringify(cloudItems)); } catch { /* Cloud remains the source of truth. */ }
+        if (cloudItems[0]) {
+          setActiveConversationId(cloudItems[0].id);
+          setMessages(cloudItems[0].messages);
+        } else {
+          setActiveConversationId(null);
+          setMessages([welcome]);
+        }
+      } catch (error) {
+        if (active) setNotice(error instanceof Error
+          ? copy("Cloud chat sync failed: ", "تعذرت مزامنة المحادثات: ") + error.message
+          : copy("Cloud chat sync failed.", "تعذرت مزامنة المحادثات."));
+      } finally {
+        if (active) setCloudReady(true);
+      }
+    })();
+    return () => { active = false; };
+  }, [userId]);
+
+  useEffect(() => {
     document.documentElement.lang = language;
   }, [language]);
 
@@ -81,12 +165,47 @@ export default function Home() {
   function persist(next: SavedConversation[]) {
     setConversations(next);
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      localStorage.setItem(userId ? `${STORAGE_KEY}:${userId}` : STORAGE_KEY, JSON.stringify(next));
     } catch {
       setNotice(copy(
         "This conversation is available until you close this tab, but browser storage is unavailable.",
         "المحادثة متاحة إلى أن تغلق علامة التبويب، لكن التخزين في المتصفح غير متاح."
       ));
+    }
+  }
+
+  async function syncConversation(item: SavedConversation) {
+    if (!userId) return;
+    try {
+      const supabase = createClient();
+      const { error: conversationError } = await supabase.from("conversations").upsert({
+        id: item.id,
+        user_id: userId,
+        title: item.title.slice(0, 160) || "New conversation",
+        updated_at: new Date(item.updatedAt).toISOString(),
+      }, { onConflict: "id" });
+      if (conversationError) throw conversationError;
+
+      const { error: deleteError } = await supabase.from("messages")
+        .delete().eq("conversation_id", item.id).eq("user_id", userId);
+      if (deleteError) throw deleteError;
+
+      if (item.messages.length) {
+        const { error: insertError } = await supabase.from("messages").insert(
+          item.messages.filter((message) => message.role === "user" || message.role === "assistant")
+            .map((message) => ({
+              conversation_id: item.id,
+              user_id: userId,
+              role: message.role,
+              content: message.content.slice(0, 12000),
+            }))
+        );
+        if (insertError) throw insertError;
+      }
+    } catch (error) {
+      setNotice(error instanceof Error
+        ? copy("Saved on this device; cloud sync failed: ", "حُفظت على الجهاز وتعذرت المزامنة: ") + error.message
+        : copy("Saved on this device; cloud sync failed.", "حُفظت على الجهاز وتعذرت المزامنة."));
     }
   }
 
@@ -101,6 +220,7 @@ export default function Home() {
     };
     setActiveConversationId(id);
     persist([item, ...conversations.filter((conversation) => conversation.id !== id)].slice(0, 30));
+    void syncConversation(item);
   }
 
   function newChat() {
@@ -188,7 +308,7 @@ export default function Home() {
           {conversations.length === 0 && <p className="muted small">{copy("Your chats will appear here.", "ستظهر محادثاتك هنا.")}</p>}
           <div className="profile">
             <div className="avatar">N</div>
-            <div><strong>NEXUS User</strong><small>{copy("Personal workspace", "مساحة شخصية")}</small></div>
+            <div><strong>{userId ? copy("Connected account", "حساب متصل") : copy("NEXUS User", "مستخدم NEXUS")}</strong><small>{userId ? copy("Cloud sync enabled", "المزامنة السحابية مفعّلة") : copy("Personal workspace", "مساحة شخصية")}</small></div>
             <span className="profile-menu">•••</span>
           </div>
         </div>
@@ -229,6 +349,7 @@ export default function Home() {
 
             <div className="chat-card">
               <div className="chat-header"><div><span className="live-dot" />{copy("NEXUS ASSISTANT", "مساعد NEXUS")}<span className="chat-subtitle">{copy("Private workspace", "مساحة خاصة")}</span></div><button className="icon-button" onClick={newChat} title="New chat">＋</button></div>
+              {!cloudReady && <div className="settings-note">{copy("Connecting your chat history…", "جارٍ الاتصال بسجل محادثاتك…")}</div>}
               <div className="messages">
                 {messages.map((message, index) => (
                   <div className={`message-row ${message.role === "user" ? "user-row" : ""}`} key={index}>
@@ -253,7 +374,7 @@ export default function Home() {
               <button onClick={() => setInput(copy("Explain a difficult concept simply.", "اشرح لي مفهوماً صعباً ببساطة."))}>⌁ {copy("Learn something", "تعلّم شيئاً")}</button>
               <button onClick={() => setInput(copy("Review this code and suggest improvements.", "راجع هذا الكود واقترح تحسينات."))}>⌘ {copy("Review code", "راجع كوداً")}</button>
             </div>
-            <p className="footnote">{copy("AI can make mistakes. Review important information before acting.", "قد يخطئ الذكاء الاصطناعي. راجع المعلومات المهمة قبل العمل بها.")}</p>
+            <p className="footnote">{userId ? copy("Your conversations sync to your account. AI can make mistakes; review important information.", "تتزامن محادثاتك مع حسابك. قد يخطئ الذكاء الاصطناعي؛ راجع المعلومات المهمة.") : copy("Conversations are saved on this device. Sign in to enable cloud sync.", "تُحفظ المحادثات على هذا الجهاز. سجّل الدخول لتفعيل المزامنة السحابية.")}</p>
           </div>
         ) : (
           <div className="placeholder-page">
