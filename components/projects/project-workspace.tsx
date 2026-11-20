@@ -13,6 +13,17 @@ type Project = {
 
 const STORAGE_KEY = "nexus-ai-projects-v1";
 
+function isProject(value: unknown): value is Project {
+  if (!value || typeof value !== "object") return false;
+  const item = value as Record<string, unknown>;
+  return typeof item.id === "string" &&
+    typeof item.name === "string" &&
+    typeof item.description === "string" &&
+    (item.status === "active" || item.status === "paused") &&
+    typeof item.createdAt === "number" &&
+    typeof item.updatedAt === "number";
+}
+
 export default function ProjectWorkspace({ isArabic, onBack }: { isArabic: boolean; onBack: () => void }) {
   const [projects, setProjects] = useState<Project[]>([]);
   const [name, setName] = useState("");
@@ -20,6 +31,7 @@ export default function ProjectWorkspace({ isArabic, onBack }: { isArabic: boole
   const [query, setQuery] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  const [storageWarning, setStorageWarning] = useState("");
 
   const t = (en: string, ar: string) => (isArabic ? ar : en);
 
@@ -28,10 +40,14 @@ export default function ProjectWorkspace({ isArabic, onBack }: { isArabic: boole
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
         const parsed: unknown = JSON.parse(saved);
-        if (Array.isArray(parsed)) setProjects(parsed as Project[]);
+        if (Array.isArray(parsed) && parsed.every(isProject)) {
+          setProjects(parsed);
+        } else {
+          localStorage.removeItem(STORAGE_KEY);
+        }
       }
     } catch {
-      localStorage.removeItem(STORAGE_KEY);
+      try { localStorage.removeItem(STORAGE_KEY); } catch { /* Storage may be disabled. */ }
     } finally {
       setLoaded(true);
     }
@@ -39,7 +55,15 @@ export default function ProjectWorkspace({ isArabic, onBack }: { isArabic: boole
 
   function persist(next: Project[]) {
     setProjects(next);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      setStorageWarning("");
+    } catch {
+      setStorageWarning(t(
+        "Changes are visible for this session, but browser storage is unavailable.",
+        "التغييرات ظاهرة خلال هذه الجلسة، لكن التخزين في المتصفح غير متاح."
+      ));
+    }
   }
 
   function createProject(event: FormEvent) {
@@ -132,6 +156,7 @@ export default function ProjectWorkspace({ isArabic, onBack }: { isArabic: boole
           ))}
         </div>
       )}
+      {storageWarning && <p className="notice" role="alert">{storageWarning}</p>}
       <p className="footnote">{t("Local-only for now. Cloud sync, files, and project-specific AI memory are planned next.", "الحفظ محلي حالياً. المزامنة السحابية والملفات وذاكرة الذكاء لكل مشروع قادمة لاحقاً.")}</p>
       <button className="back-button project-back" onClick={onBack}>{t("Back to AI Hub", "العودة إلى مركز الذكاء")}</button>
     </div>
