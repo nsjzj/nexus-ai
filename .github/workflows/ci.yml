@@ -2,9 +2,13 @@ name: CI
 
 on:
   push:
-    branches: [main, nexus-ai-foundation]
+    branches: [main]
   pull_request:
     branches: [main]
+
+concurrency:
+  group: nexus-ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   verify:
