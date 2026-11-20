@@ -147,7 +147,7 @@ export default function ProjectWorkspace({ isArabic, onBack }: { isArabic: boole
     if (!userId) return;
     try {
       const supabase = createClient();
-      const { error } = await supabase.from("projects").upsert(
+      const { error } = next.length ? await supabase.from("projects").upsert(
         next.map((item) => ({
           id: item.id,
           user_id: userId,
@@ -158,7 +158,7 @@ export default function ProjectWorkspace({ isArabic, onBack }: { isArabic: boole
           updated_at: new Date(item.updatedAt).toISOString(),
         })),
         { onConflict: "id" },
-      );
+      ) : { error: null };
       if (error) throw error;
       if (removedIds.length) {
         const { error: deleteError } = await supabase.from("projects").delete().in("id", removedIds).eq("user_id", userId);
