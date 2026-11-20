@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
+import { createClient } from "@/lib/supabase/client";
 
 type Project = {
   id: string;
@@ -32,6 +33,8 @@ export default function ProjectWorkspace({ isArabic, onBack }: { isArabic: boole
   const [showForm, setShowForm] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [storageWarning, setStorageWarning] = useState("");
+  const [userId, setUserId] = useState<string | null>(null);
+  const [cloudReady, setCloudReady] = useState(false);
 
   const t = (en: string, ar: string) => (isArabic ? ar : en);
 
@@ -40,11 +43,8 @@ export default function ProjectWorkspace({ isArabic, onBack }: { isArabic: boole
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
         const parsed: unknown = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.every(isProject)) {
-          setProjects(parsed);
-        } else {
-          localStorage.removeItem(STORAGE_KEY);
-        }
+        if (Array.isArray(parsed) && parsed.every(isProject)) setProjects(parsed);
+        else localStorage.removeItem(STORAGE_KEY);
       }
     } catch {
       try { localStorage.removeItem(STORAGE_KEY); } catch { /* Storage may be disabled. */ }
@@ -53,16 +53,118 @@ export default function ProjectWorkspace({ isArabic, onBack }: { isArabic: boole
     }
   }, []);
 
-  function persist(next: Project[]) {
+  useEffect(() => {
+    let active = true;
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    if (!url || !key) {
+      setCloudReady(true);
+      return;
+    }
+    const supabase = createClient();
+    void supabase.auth.getUser().then(({ data }) => {
+      if (active) setUserId(data.user?.id ?? null);
+    });
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (active) {
+        setCloudReady(false);
+        setUserId(session?.user.id ?? null);
+      }
+    });
+    return () => {
+      active = false;
+      listener.subscription.unsubscribe();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!loaded || !userId) {
+      if (loaded && !userId) setCloudReady(true);
+      return;
+    }
+    let active = true;
+    setCloudReady(false);
+    void (async () => {
+      try {
+        const supabase = createClient();
+        const { data, error } = await supabase
+          .from("projects")
+          .select("id,name,description,status,created_at,updated_at")
+          .eq("user_id", userId)
+          .order("updated_at", { ascending: false });
+        if (error) throw error;
+        const cloudProjects: Project[] = (data ?? []).map((item) => ({
+          id: item.id,
+          name: item.name,
+          description: item.description,
+          status: item.status,
+          createdAt: new Date(item.created_at).getTime(),
+          updatedAt: new Date(item.updated_at).getTime(),
+        }));
+        const localOnly = projects.filter((local) => !cloudProjects.some((cloud) => cloud.id === local.id));
+        if (localOnly.length) {
+          const { error: uploadError } = await supabase.from("projects").upsert(
+            localOnly.map((item) => ({
+              id: item.id,
+              user_id: userId,
+              name: item.name,
+              description: item.description,
+              status: item.status,
+              created_at: new Date(item.createdAt).toISOString(),
+              updated_at: new Date(item.updatedAt).toISOString(),
+            })),
+            { onConflict: "id" },
+          );
+          if (uploadError) throw uploadError;
+        }
+        if (!active) return;
+        const merged = [...cloudProjects, ...localOnly].sort((a, b) => b.updatedAt - a.updatedAt);
+        setProjects(merged);
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(merged)); } catch { /* Cloud remains source of truth. */ }
+      } catch (error) {
+        if (active) setStorageWarning(error instanceof Error
+          ? t("Cloud sync failed: ", "تعذرت المزامنة السحابية: ") + error.message
+          : t("Cloud sync failed.", "تعذرت المزامنة السحابية."));
+      } finally {
+        if (active) setCloudReady(true);
+      }
+    })();
+    return () => { active = false; };
+  // Run once after the initial local load or when the signed-in account changes.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loaded, userId]);
+
+  async function persist(next: Project[]) {
     setProjects(next);
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-      setStorageWarning("");
     } catch {
       setStorageWarning(t(
         "Changes are visible for this session, but browser storage is unavailable.",
         "التغييرات ظاهرة خلال هذه الجلسة، لكن التخزين في المتصفح غير متاح."
       ));
+    }
+    if (!userId) return;
+    try {
+      const supabase = createClient();
+      const { error } = await supabase.from("projects").upsert(
+        next.map((item) => ({
+          id: item.id,
+          user_id: userId,
+          name: item.name,
+          description: item.description,
+          status: item.status,
+          created_at: new Date(item.createdAt).toISOString(),
+          updated_at: new Date(item.updatedAt).toISOString(),
+        })),
+        { onConflict: "id" },
+      );
+      if (error) throw error;
+      setStorageWarning("");
+    } catch (error) {
+      setStorageWarning(error instanceof Error
+        ? t("Saved on this device; cloud sync failed: ", "حُفظت على الجهاز وتعذرت المزامنة: ") + error.message
+        : t("Saved on this device; cloud sync failed.", "حُفظت على الجهاز وتعذرت المزامنة."));
     }
   }
 
@@ -79,21 +181,21 @@ export default function ProjectWorkspace({ isArabic, onBack }: { isArabic: boole
       createdAt: now,
       updatedAt: now,
     };
-    persist([project, ...projects]);
+    void persist([project, ...projects]);
     setName("");
     setDescription("");
     setShowForm(false);
   }
 
   function toggleStatus(project: Project) {
-    persist(projects.map((item) => item.id === project.id
+    void persist(projects.map((item) => item.id === project.id
       ? { ...item, status: item.status === "active" ? "paused" : "active", updatedAt: Date.now() }
       : item));
   }
 
   function deleteProject(project: Project) {
     const confirmed = window.confirm(t(`Delete "${project.name}"? This only removes its local project card.`, `تحذف "${project.name}"؟ سيؤدي هذا إلى إزالة بطاقة المشروع من هذا الجهاز فقط.`));
-    if (confirmed) persist(projects.filter((item) => item.id !== project.id));
+    if (confirmed) void persist(projects.filter((item) => item.id !== project.id));
   }
 
   const filtered = useMemo(() => projects.filter((project) =>
@@ -131,7 +233,7 @@ export default function ProjectWorkspace({ isArabic, onBack }: { isArabic: boole
         <span className="project-count">{projects.length} {t("projects", "مشاريع")}</span>
       </div>
 
-      {!loaded ? <p className="muted">{t("Loading projects…", "جارٍ تحميل المشاريع…")}</p> : filtered.length === 0 ? (
+      {!loaded || !cloudReady ? <p className="muted">{t("Loading projects…", "جارٍ تحميل المشاريع…")}</p> : filtered.length === 0 ? (
         <div className="project-empty">
           <div className="placeholder-icon">▦</div>
           <h2>{query ? t("No matching projects", "ما لقينا مشاريع مطابقة") : t("Your first project starts here.", "مشروعك الأول يبدأ من هنا.")}</h2>
@@ -157,7 +259,7 @@ export default function ProjectWorkspace({ isArabic, onBack }: { isArabic: boole
         </div>
       )}
       {storageWarning && <p className="notice" role="alert">{storageWarning}</p>}
-      <p className="footnote">{t("Local-only for now. Cloud sync, files, and project-specific AI memory are planned next.", "الحفظ محلي حالياً. المزامنة السحابية والملفات وذاكرة الذكاء لكل مشروع قادمة لاحقاً.")}</p>
+      <p className="footnote">{userId ? t("Signed-in projects sync with your Supabase account. Local copies remain available on this device.", "تتزامن المشاريع مع حساب Supabase عند تسجيل الدخول، وتبقى نسخة محلية على هذا الجهاز.") : t("Projects are saved on this device. Sign in and configure Supabase to enable cloud sync.", "تُحفظ المشاريع على هذا الجهاز. سجّل الدخول واضبط Supabase لتفعيل المزامنة.")}</p>
       <button className="back-button project-back" onClick={onBack}>{t("Back to AI Hub", "العودة إلى مركز الذكاء")}</button>
     </div>
   );
