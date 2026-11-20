@@ -83,7 +83,7 @@ The server route uses the OpenAI-compatible `POST /chat/completions` format.
 - Ollama: use a reachable Ollama endpoint such as `http://localhost:11434/v1`, set the key value required by that endpoint, and select a model installed locally.
 - Some hosted providers charge for API usage. NEXUS AI does not currently add a subscription, but provider usage may cost money.
 
-The API requires signed-in Supabase users in production, applies shared per-user rate limits through Upstash Redis, limits request size and message count, and caps generated output at 1,200 tokens. Local development uses an in-memory best-effort limiter. This is a conservative default, not a guarantee of low latency: response speed depends on the selected model, provider, network, and hosting region.
+The API requires signed-in Supabase users in production, applies shared per-user limits through Upstash Redis (12 requests/minute and 100/day by default), limits request size and message count, and caps generated output at 1,200 tokens. Local development uses an in-memory best-effort limiter. This is a conservative default, not a guarantee of low latency: response speed depends on the selected model, provider, network, and hosting region.
 
 ## Supabase data and account isolation
 
