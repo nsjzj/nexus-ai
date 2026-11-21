@@ -130,7 +130,7 @@ export default function GitHubLab({ isArabic }: { isArabic: boolean }) {
           {commits.length > 0 && <div className="github-readme"><h3>{t("Recent commits", "آخر التحديثات")}</h3><ul>{commits.map((commit) => <li key={commit.sha}><a href={commit.html_url} target="_blank" rel="noreferrer">{commit.commit.message.split("\n")[0].slice(0, 140)}</a><p className="settings-note">{commit.commit.author?.name || t("Unknown author", "مؤلف غير معروف")} · {commit.commit.author?.date ? new Date(commit.commit.author.date).toLocaleDateString(isArabic ? "ar" : "en") : ""} · {commit.sha.slice(0, 7)}</p></li>)}</ul></div>}
         </section>
       )}
-      <p className="footnote">{t("This first GitHub Lab version only reads public repository metadata and README files. It does not clone code, execute scripts, access private repositories, or modify anything.", "هذه النسخة الأولى تقرأ بيانات المستودع العام وملف README فقط. لا تستنسخ الكود ولا تشغّل ملفات ولا تصل للمستودعات الخاصة ولا تعدّل شيئاً.")}</p>
+      <p className="footnote">{t("This GitHub Lab reads public repository metadata, topics, README previews, and recent commit history. It does not clone code, execute scripts, access private repositories, or modify anything.", "يقرأ مختبر GitHub بيانات المستودع العام والوسوم ومعاينة README وآخر التحديثات. لا يستنسخ الكود ولا يشغّل ملفات ولا يصل للمستودعات الخاصة ولا يعدّل شيئاً.")}</p>
     </div>
   );
 }
