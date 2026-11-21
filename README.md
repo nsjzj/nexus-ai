@@ -14,7 +14,7 @@
 - Local conversation history for signed-out users.
 - Per-account conversation history sync when Supabase is configured and the user is signed in.
 - Projects workspace with create, search, pause/resume, and delete actions.
-- Per-project memory notes with create, edit, delete, and account-isolated cloud storage.
+- Per-project memory notes with create, edit, delete, account-isolated cloud storage, and an explicit action to add saved notes to the AI chat context.
 - Per-account cloud project sync, with account-specific browser caches.
 - Supabase email/password sign-up, sign-in, sign-out, SSR session helpers, and auth callback route.
 - Read-only GitHub Lab for public repository metadata and README inspection.
@@ -126,7 +126,7 @@ Run these checks against the exact commit you intend to use. Results depend on t
 
 1. **Foundation:** responsive UI, language support, AI Hub, server-side provider adapter.
 2. **AI Hub:** model selection, conversation search/export, usage controls.
-3. **Project Memory:** per-project notes are implemented; file attachments, per-project AI instructions, and automatic context retrieval remain planned.
+3. **Project Memory:** per-project notes and explicit memory-to-chat context injection are implemented; file attachments, per-project AI instructions, and automatic context retrieval remain planned.
 4. **GitHub Lab:** secure private-repository connection, source browsing, code review, branch-based patches, and pull requests with user approval.
 5. **Automation:** multi-step workflows, approval checkpoints, activity history, and rollback.
 6. **Release readiness:** shared rate limits, cost controls, security review, monitoring, and hosted deployment.
