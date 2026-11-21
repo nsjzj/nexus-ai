@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: nexus-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - uses: actions/cache@v4
+        with:
+          path: .next/cache
+          key: ${{ runner.os }}-nextjs-${{ hashFiles('package.json') }}-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-nextjs-${{ hashFiles('package.json') }}-
+      - run: npm install
+      - name: Report dependency advisories
+        run: |
+          npm audit --json > audit.json || true
+          node -e 'const a=require("./audit.json"); console.log("Dependency advisory summary:", JSON.stringify(a.metadata?.vulnerabilities ?? {}, null, 2)); for (const [name, item] of Object.entries(a.vulnerabilities ?? {})) console.log(name + ": " + item.severity + "; fixAvailable=" + JSON.stringify(item.fixAvailable));'
+      - name: Block high and critical dependency vulnerabilities
+        run: npm audit --audit-level=high
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm run build

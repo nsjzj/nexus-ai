@@ -1,0 +1,110 @@
+"use client";
+
+import { FormEvent, useState } from "react";
+
+type Repository = {
+  full_name: string;
+  description: string | null;
+  html_url: string;
+  stargazers_count: number;
+  forks_count: number;
+  language: string | null;
+  default_branch: string;
+  license: { spdx_id: string | null } | null;
+  updated_at: string;
+};
+
+function parseRepository(value: string): { owner: string; repo: string } | null {
+  const cleaned = value.trim().replace(/\.git$/i, "").replace(/\/$/, "");
+  const match = cleaned.match(/^(?:https?:\/\/github\.com\/)?([A-Za-z0-9_.-]+)\/([A-Za-z0-9_.-]+)$/);
+  if (!match) return null;
+  return { owner: match[1], repo: match[2] };
+}
+
+export default function GitHubLab({ isArabic }: { isArabic: boolean }) {
+  const [input, setInput] = useState("");
+  const [repository, setRepository] = useState<Repository | null>(null);
+  const [readme, setReadme] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const t = (en: string, ar: string) => isArabic ? ar : en;
+
+  async function inspect(event: FormEvent) {
+    event.preventDefault();
+    const parsed = parseRepository(input);
+    if (!parsed) {
+      setError(t("Enter a public GitHub repository as owner/name or a GitHub URL.", "أدخل مستودع GitHub عام بصيغة owner/name أو رابطه."));
+      return;
+    }
+    setBusy(true);
+    setError("");
+    setRepository(null);
+    setReadme("");
+    try {
+      const base = `https://api.github.com/repos/${encodeURIComponent(parsed.owner)}/${encodeURIComponent(parsed.repo)}`;
+      const response = await fetch(base, { headers: { Accept: "application/vnd.github+json" } });
+      if (!response.ok) {
+        if (response.status === 404) throw new Error(t("Repository not found or not public.", "المستودع غير موجود أو ليس عاماً."));
+        if (response.status === 403 || response.status === 429) throw new Error(t("GitHub rate limit reached. Wait a little and try again.", "وصلت إلى حد طلبات GitHub. انتظر قليلاً ثم حاول مجدداً."));
+        throw new Error(t("GitHub could not load this repository.", "تعذر تحميل المستودع من GitHub."));
+      }
+      const repoData = (await response.json()) as Repository;
+      setRepository(repoData);
+
+      const readmeResponse = await fetch(`${base}/readme`, { headers: { Accept: "application/vnd.github+json" } });
+      if (readmeResponse.ok) {
+        const file = (await readmeResponse.json()) as { content?: string; encoding?: string };
+        if (file.content && file.encoding === "base64") {
+          const binary = atob(file.content.replace(/\s/g, ""));
+          const bytes = Uint8Array.from(binary, (character) => character.charCodeAt(0));
+          setReadme(new TextDecoder().decode(bytes).slice(0, 18000));
+        }
+      }
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : t("Could not inspect repository.", "تعذر فحص المستودع."));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="hub-layout github-lab">
+      <div className="page-heading">
+        <div>
+          <div className="eyebrow">{t("READ-ONLY REPOSITORY INSPECTOR", "فاحص المستودعات للقراءة فقط")}</div>
+          <h1>{t("Explore a GitHub project.", "استكشف مشروعاً على GitHub.")}</h1>
+          <p>{t("Start with a public repository. Private repository access and code changes will require a secure GitHub connection.", "ابدأ بمستودع عام. الوصول للمستودعات الخاصة وتعديل الكود يحتاج ربط GitHub آمن.")}</p>
+        </div>
+      </div>
+      <form className="project-form github-search-form" onSubmit={inspect}>
+        <label>{t("Repository", "المستودع")}
+          <input value={input} onChange={(event) => setInput(event.target.value)} placeholder="vercel/next.js" required />
+        </label>
+        <div className="project-form-actions">
+          <span className="settings-note">{t("Public repositories only · No GitHub token required", "المستودعات العامة فقط · لا يحتاج رمز GitHub")}</span>
+          <button className="project-primary" type="submit" disabled={busy || !input.trim()}>{busy ? t("Inspecting…", "جارٍ الفحص…") : t("Inspect repository", "افحص المستودع")}</button>
+        </div>
+      </form>
+      {error && <p className="notice" role="alert">{error}</p>}
+      {repository && (
+        <section className="settings-card">
+          <div className="eyebrow">{t("REPOSITORY OVERVIEW", "نظرة عامة على المستودع")}</div>
+          <h2>{repository.full_name}</h2>
+          <p>{repository.description || t("No description provided.", "لم يُضف وصف للمستودع.")}</p>
+          <div className="github-stats">
+            <span>★ {repository.stargazers_count.toLocaleString()}</span>
+            <span>⑂ {repository.forks_count.toLocaleString()}</span>
+            <span>{repository.language || t("Language unknown", "اللغة غير محددة")}</span>
+            <span>{t("Default branch", "الفرع الافتراضي")}: {repository.default_branch}</span>
+            <span>{t("License", "الرخصة")}: {repository.license?.spdx_id || t("Not specified", "غير محددة")}</span>
+          </div>
+          <p className="settings-note">{t("Last updated", "آخر تحديث")}: {new Date(repository.updated_at).toLocaleString(isArabic ? "ar" : "en")}</p>
+          <a className="project-primary github-open-link" href={repository.html_url} target="_blank" rel="noreferrer">{t("Open on GitHub", "افتح على GitHub")} ↗</a>
+          {readme && <div className="github-readme"><h3>README</h3><pre>{readme}</pre></div>}
+          {!readme && <p className="settings-note">{t("No README was found in the default branch.", "لم نعثر على ملف README في الفرع الافتراضي.")}</p>}
+        </section>
+      )}
+      <p className="footnote">{t("This first GitHub Lab version only reads public repository metadata and README files. It does not clone code, execute scripts, access private repositories, or modify anything.", "هذه النسخة الأولى تقرأ بيانات المستودع العام وملف README فقط. لا تستنسخ الكود ولا تشغّل ملفات ولا تصل للمستودعات الخاصة ولا تعدّل شيئاً.")}</p>
+    </div>
+  );
+}
