@@ -29,13 +29,14 @@ function isNote(value: unknown): value is MemoryNote {
 }
 
 export default function ProjectMemory({
-  projectId, projectName, userId, isArabic, onBack,
+  projectId, projectName, userId, isArabic, onBack, onUseInChat,
 }: {
   projectId: string;
   projectName: string;
   userId: string | null;
   isArabic: boolean;
   onBack: () => void;
+  onUseInChat: (projectName: string, notes: { title: string; content: string }[]) => void;
 }) {
   const [notes, setNotes] = useState<MemoryNote[]>([]);
   const [title, setTitle] = useState("");
@@ -168,6 +169,7 @@ export default function ProjectMemory({
           <p>{t("Keep decisions, instructions, useful links, and context together.", "احتفظ بالقرارات والتعليمات والروابط والسياق في مكان واحد.")}</p>
         </div>
       </div>
+      <div className="project-form-actions"><button type="button" className="project-primary" onClick={() => onUseInChat(projectName, notes.map(({ title, content }) => ({ title, content })))} disabled={busy || notes.length === 0}>{t("Use memory in AI chat", "استخدم الذاكرة في محادثة AI")}</button></div>
       <form className="project-form" onSubmit={save}>
         <label>{t("Note title", "عنوان الملاحظة")}
           <input value={title} onChange={(event) => setTitle(event.target.value)} maxLength={120} required placeholder={t("e.g. Product direction", "مثلاً: توجه المشروع")} />
