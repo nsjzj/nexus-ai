@@ -17,7 +17,7 @@
 - Per-project memory notes with create, edit, delete, account-isolated cloud storage, and an explicit action to add saved notes to the AI chat context.
 - Per-account cloud project sync, with account-specific browser caches.
 - Supabase email/password sign-up, sign-in, sign-out, SSR session helpers, and auth callback route.
-- Read-only GitHub Lab for public repository metadata and README inspection.
+- Read-only GitHub Lab for public repository metadata, topics, README preview, and recent commit history.
 - No external font download on the critical page-load path.
 
 ## Requirements
@@ -99,7 +99,7 @@ The production AI endpoint fails closed if Supabase Auth or Upstash credentials 
 
 ## GitHub Lab scope
 
-The current GitHub Lab version reads public repository metadata and README files. It does not access private repositories, clone or execute source code, review entire codebases, create branches, or open pull requests. Those capabilities require a secure GitHub authorization flow and explicit approval before making changes.
+The current GitHub Lab version reads public repository metadata, topics, the README, and the five most recent commits. It does not access private repositories, clone or execute source code, review entire codebases, create branches, or open pull requests. Those capabilities require a secure GitHub authorization flow and explicit approval before making changes.
 
 ## Performance and reliability
 
