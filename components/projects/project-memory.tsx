@@ -1,5 +1,7 @@
 "use client";
 
+/* eslint-disable react-hooks/set-state-in-effect -- load notes when the selected project or account changes. */
+
 import { FormEvent, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
@@ -84,6 +86,10 @@ export default function ProjectMemory({
     const cleanTitle = title.trim();
     const cleanContent = content.trim();
     if (!cleanTitle || !cleanContent || saving) return;
+    if (!editingId && notes.length >= MAX_NOTES) {
+      setError(t("This project has reached the 100-note limit.", "وصل المشروع إلى الحد الأقصى وهو 100 ملاحظة."));
+      return;
+    }
     setSaving(true);
     setError("");
     try {
@@ -108,13 +114,11 @@ export default function ProjectMemory({
         setNotes((data ?? []) as MemoryNote[]);
       } else {
         const now = new Date().toISOString();
-        const existing = notes.find((note) => note.id === editingId);
         const next: MemoryNote[] = editingId
           ? notes.map((note) => note.id === editingId
               ? { ...note, title: cleanTitle, content: cleanContent, updated_at: now } : note)
           : [{ id: crypto.randomUUID(), project_id: projectId, user_id: "guest",
               title: cleanTitle, content: cleanContent, created_at: now, updated_at: now }, ...notes];
-        void existing;
         setNotes(next);
         localStorage.setItem(localKey(projectId, null), JSON.stringify(next));
       }
