@@ -1,5 +1,7 @@
 "use client";
 
+/* eslint-disable react-hooks/set-state-in-effect -- hydrate browser-only workflow storage. */
+
 import { FormEvent, useEffect, useState } from "react";
 
 type Workflow = { id: string; name: string; prompt: string; updatedAt: number };
@@ -40,7 +42,7 @@ export default function AutomationLab({ isArabic }: { isArabic: boolean }) {
     } catch {
       setWorkflows([]);
       setRuns([]);
-      setNotice(t("Saved workflows could not be read. You can create them again.", "تعذرت قراءة مسارات العمل المحفوظة. تقدر تنشئها من جديد."));
+      setNotice("Saved workflows could not be read. You can create them again.");
     }
   }, []);
 
