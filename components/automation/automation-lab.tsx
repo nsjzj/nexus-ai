@@ -114,11 +114,13 @@ export default function AutomationLab({ isArabic }: { isArabic: boolean }) {
         if (typeof data.message?.content === "string") output = data.message.content;
       }
       if (!output.trim()) throw new Error(t("The AI provider returned an empty response.", "مزوّد الذكاء الاصطناعي أعاد إجابة فارغة."));
+      // eslint-disable-next-line react-hooks/purity -- timestamp is created in the user-triggered async action.
       const run: Run = { id: crypto.randomUUID(), workflowName: workflow.name, status: "success", output, createdAt: Date.now() };
       saveRuns([run, ...runs].slice(0, 30));
       setSelectedRun(run);
     } catch (error) {
       const message = error instanceof Error ? error.message : t("Unknown workflow error.", "حدث خطأ غير معروف.");
+      // eslint-disable-next-line react-hooks/purity -- timestamp is created in the user-triggered async action.
       const run: Run = { id: crypto.randomUUID(), workflowName: workflow.name, status: "failed", output: message.slice(0, 2000), createdAt: Date.now() };
       saveRuns([run, ...runs].slice(0, 30));
       setSelectedRun(run);
