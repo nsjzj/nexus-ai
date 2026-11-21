@@ -72,3 +72,6 @@ button{cursor:pointer}
 
 
 .github-search-form{max-width:760px}.github-stats{display:flex;flex-wrap:wrap;gap:9px;margin:17px 0;color:#b6bfd2;font-size:11px}.github-stats span{border:1px solid #30364b;border-radius:7px;padding:7px 9px;background:#0b0f19}.github-open-link{display:inline-flex;text-decoration:none;margin:4px 0 12px}.github-readme{margin-top:18px;border-top:1px solid #292e43;padding-top:15px}.github-readme h3{font-size:13px;margin-bottom:10px}.github-readme pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:480px;overflow:auto;border:1px solid #30364b;border-radius:8px;background:#0b0f19;padding:14px;color:#c2cadb;font-size:11px;line-height:1.65}
+
+/* Project memory */
+.memory-content{white-space:pre-wrap;overflow-wrap:anywhere;max-height:320px;overflow:auto;line-height:1.75}
