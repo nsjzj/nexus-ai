@@ -2,7 +2,7 @@
 
 **Your All-in-One AI Workspace** — a mobile-first workspace designed to make AI and developer tools easier to use.
 
-> Project status: active foundation build on Next.js 16.4.6. The AI Hub, device-local chat, optional per-account chat/project sync, Supabase email authentication, and read-only public GitHub Lab are implemented in the development branch. A real Supabase project, AI provider credentials, and deployment are still required. The current development branch passes TypeScript, ESLint, and production-build checks in GitHub Actions; the dependency audit reported zero known advisories at the verified commit.
+> Project status: active foundation build on Next.js 16.4.6. The AI Hub, device-local chat, optional per-account chat/project sync, Supabase email authentication, and read-only public GitHub Lab are implemented on the default branch. A real Supabase project, AI provider credentials, and deployment configuration are still required. Run the verification commands and dependency audit below against the exact commit you plan to deploy; CI results and dependency advisories can change over time.
 
 ## What's included
 
@@ -29,12 +29,11 @@
 
 ## Run locally
 
-1. Clone the repository and switch to the development branch:
+1. Clone the repository's default branch:
 
    ```bash
    git clone https://github.com/nsjzj/nexus-ai.git
    cd nexus-ai
-   git checkout nexus-ai-foundation
    ```
 
 2. Install dependencies:
