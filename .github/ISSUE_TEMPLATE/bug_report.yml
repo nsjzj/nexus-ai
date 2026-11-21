@@ -1,0 +1,36 @@
+name: Bug report
+description: Report a reproducible problem in NEXUS AI
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: "Please remove private data from reports. Never post API keys, passwords, access tokens, or other people's information."
+  - type: textarea
+    id: summary
+    attributes:
+      label: What happened?
+      description: Describe the problem and what you expected instead.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      placeholder: "1. Open… 2. Select… 3. See error…"
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Browser/device and app version or commit, if known.
+    validations:
+      required: false
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant error message
+      description: Remove secrets and personal data before pasting logs.
+    validations:
+      required: false

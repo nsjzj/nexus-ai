@@ -2,7 +2,7 @@
 
 **Your All-in-One AI Workspace** — a mobile-first workspace designed to make AI and developer tools easier to use.
 
-> Project status: active foundation build on Next.js 16.4.6. The AI Hub, device-local chat, optional per-account chat/project sync, Supabase email authentication, and read-only public GitHub Lab are implemented in the development branch. A real Supabase project, AI provider credentials, and deployment are still required. The current development branch passes TypeScript, ESLint, and production-build checks in GitHub Actions; the dependency audit reported zero known advisories at the verified commit.
+> Project status: active foundation build on Next.js 16.4.6. The AI Hub, device-local chat, optional per-account chat/project sync, Supabase email authentication, and read-only public GitHub Lab are implemented on the default branch. A real Supabase project, AI provider credentials, and deployment configuration are still required. Run the verification commands and dependency audit below against the exact commit you plan to deploy; CI results and dependency advisories can change over time.
 
 ## What's included
 
@@ -14,9 +14,11 @@
 - Local conversation history for signed-out users.
 - Per-account conversation history sync when Supabase is configured and the user is signed in.
 - Projects workspace with create, search, pause/resume, and delete actions.
+- Per-project memory notes with create, edit, delete, account-isolated cloud storage, and an explicit action to add saved notes to the AI chat context.
 - Per-account cloud project sync, with account-specific browser caches.
 - Supabase email/password sign-up, sign-in, sign-out, SSR session helpers, and auth callback route.
-- Read-only GitHub Lab for public repository metadata and README inspection.
+- Read-only GitHub Lab for public repository metadata, topics, README preview, and recent commit history.
+- Reusable AI workflows with manual execution, saved prompts, and a local run history; background scheduling is not yet connected.
 - No external font download on the critical page-load path.
 
 ## Requirements
@@ -29,12 +31,11 @@
 
 ## Run locally
 
-1. Clone the repository and switch to the development branch:
+1. Clone the repository's default branch:
 
    ```bash
    git clone https://github.com/nsjzj/nexus-ai.git
    cd nexus-ai
-   git checkout nexus-ai-foundation
    ```
 
 2. Install dependencies:
@@ -63,7 +64,7 @@
 
    Never commit `.env.local`, expose provider keys in client code, or place a Supabase service-role key in a `NEXT_PUBLIC_*` variable.
 
-5. Apply both migrations in order: `supabase/migrations/0001_initial_schema.sql` and `supabase/migrations/0002_stable_message_order.sql`, using the Supabase SQL Editor or Supabase CLI.
+5. Apply all three migrations in order: `supabase/migrations/0001_initial_schema.sql`, `supabase/migrations/0002_stable_message_order.sql`, and `supabase/migrations/0003_project_memories.sql`, using the Supabase SQL Editor or Supabase CLI.
 
 6. In Supabase Auth, set the site URL and allowed redirect URLs. Include `http://localhost:3000/auth/callback` for local development and your production origin plus `/auth/callback` after deployment.
 
@@ -87,9 +88,9 @@ The API requires signed-in Supabase users in production, applies shared per-user
 
 ## Supabase data and account isolation
 
-Apply both migrations in order: `supabase/migrations/0001_initial_schema.sql` and `supabase/migrations/0002_stable_message_order.sql`. They create profiles, projects, conversations, and ordered messages with Row Level Security policies tied to the authenticated user.
+Apply all three migrations in order: `supabase/migrations/0001_initial_schema.sql`, `supabase/migrations/0002_stable_message_order.sql`, and `supabase/migrations/0003_project_memories.sql`. They create profiles, projects, conversations, ordered messages, and project memory notes with Row Level Security policies tied to the authenticated user.
 
-- Signed-in users load and save conversations and projects to their own Supabase records.
+- Signed-in users load and save conversations, projects, and project memory notes to their own Supabase records.
 - Signed-in browser caches are keyed by account.
 - Signed-out conversations and projects remain local to the current browser.
 - Existing signed-out local history is not automatically copied into an account. This avoids accidentally transferring one person's device history into another account.
@@ -99,7 +100,7 @@ The production AI endpoint fails closed if Supabase Auth or Upstash credentials 
 
 ## GitHub Lab scope
 
-The current GitHub Lab version reads public repository metadata and README files. It does not access private repositories, clone or execute source code, review entire codebases, create branches, or open pull requests. Those capabilities require a secure GitHub authorization flow and explicit approval before making changes.
+The current GitHub Lab version reads public repository metadata, topics, the README, and the five most recent commits. It does not access private repositories, clone or execute source code, review entire codebases, create branches, or open pull requests. Those capabilities require a secure GitHub authorization flow and explicit approval before making changes.
 
 ## Performance and reliability
 
@@ -120,27 +121,31 @@ npm run lint
 npm run build
 ```
 
-GitHub Actions passed `npm run typecheck`, `npm run lint`, and `npm run build` on the current implementation. `npm audit` reported zero known vulnerabilities in that verified dependency tree.
+Run these checks against the exact commit you intend to use. Results depend on the installed dependency tree and current toolchain.
 
 ## Roadmap
 
 1. **Foundation:** responsive UI, language support, AI Hub, server-side provider adapter.
 2. **AI Hub:** model selection, conversation search/export, usage controls.
-3. **Project Memory:** project notes/files, per-project instructions, context retrieval.
+3. **Project Memory:** per-project notes and explicit memory-to-chat context injection are implemented; file attachments, per-project AI instructions, and automatic context retrieval remain planned.
 4. **GitHub Lab:** secure private-repository connection, source browsing, code review, branch-based patches, and pull requests with user approval.
-5. **Automation:** multi-step workflows, approval checkpoints, activity history, and rollback.
+5. **Automation:** reusable prompt workflows with manual execution and local run history are implemented. Background scheduling, multi-step orchestration, approval checkpoints, and rollback remain planned.
 6. **Release readiness:** shared rate limits, cost controls, security review, monitoring, and hosted deployment.
 
 ## Safety and privacy
 
 - Chat prompts are sent to the AI provider configured by the deployment to generate responses.
-- Signed-in conversation/project data is stored in the configured Supabase project; signed-out data remains in the current browser storage.
+- Signed-in conversation, project, and project-memory data is stored in the configured Supabase project; signed-out data remains in the current browser storage.
 - Keep provider and service-role keys on the server only.
 - Do not commit secrets, personal access tokens, or private credentials.
 - Review AI-generated output before using it in important systems.
 - Never execute untrusted repository code automatically.
 - Do not deploy as a public multi-user service until authentication, RLS, abuse controls, provider budgets, and operational monitoring are verified.
 
+## Contributing
+
+Contributions are welcome. Please read [CONTRIBUTING.md](./CONTRIBUTING.md) before opening an issue or pull request. Use the bug report template for reproducible problems. For security concerns, follow [SECURITY.md](./SECURITY.md) and do not post vulnerabilities publicly.
+
 ## License
 
-MIT. See [LICENSE](./LICENSE).
+NEXUS AI is released under the MIT License. You may use, copy, modify, distribute, and sublicense the project subject to the license terms. See [LICENSE](./LICENSE).
