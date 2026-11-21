@@ -266,6 +266,7 @@ export default function Home() {
   }
 
   function newChat() {
+    setProjectContext("");
     setActiveConversationId(null);
     setMessages([welcome]);
     setInput("");
@@ -377,6 +378,7 @@ export default function Home() {
   }
 
   function openConversation(item: SavedConversation) {
+    setProjectContext("");
     setActiveConversationId(item.id);
     setMessages(item.messages);
     setSection("hub");
