@@ -4,6 +4,7 @@
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import ProjectMemory from "@/components/projects/project-memory";
 
 type Project = {
   id: string;
@@ -38,6 +39,7 @@ export default function ProjectWorkspace({ isArabic, onBack }: { isArabic: boole
   const [userId, setUserId] = useState<string | null>(null);
   const [authResolved, setAuthResolved] = useState(false);
   const [cloudReady, setCloudReady] = useState(false);
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
 
   const t = (en: string, ar: string) => (isArabic ? ar : en);
 
@@ -211,6 +213,17 @@ export default function ProjectWorkspace({ isArabic, onBack }: { isArabic: boole
   const filtered = useMemo(() => projects.filter((project) =>
     `${project.name} ${project.description}`.toLocaleLowerCase().includes(query.toLocaleLowerCase())
   ), [projects, query]);
+  const selectedProject = projects.find((project) => project.id === selectedProjectId);
+
+  if (selectedProject) {
+    return <ProjectMemory
+      projectId={selectedProject.id}
+      projectName={selectedProject.name}
+      userId={userId}
+      isArabic={isArabic}
+      onBack={() => setSelectedProjectId(null)}
+    />;
+  }
 
   return (
     <div className="hub-layout project-workspace">
@@ -260,6 +273,7 @@ export default function ProjectWorkspace({ isArabic, onBack }: { isArabic: boole
               <div className="project-card-footer">
                 <span>{new Date(project.updatedAt).toLocaleDateString(isArabic ? "ar" : "en", { month: "short", day: "numeric", year: "numeric" })}</span>
                 <div>
+                  <button disabled={!cloudReady} onClick={() => setSelectedProjectId(project.id)}>{t("Memory", "الذاكرة")}</button>
                   <button disabled={!cloudReady} onClick={() => toggleStatus(project)}>{project.status === "active" ? t("Pause", "إيقاف") : t("Resume", "استئناف")}</button>
                   <button className="danger-text" disabled={!cloudReady} onClick={() => deleteProject(project)}>{t("Delete", "حذف")}</button>
                 </div>
