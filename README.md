@@ -142,6 +142,10 @@ Run these checks against the exact commit you intend to use. Results depend on t
 - Never execute untrusted repository code automatically.
 - Do not deploy as a public multi-user service until authentication, RLS, abuse controls, provider budgets, and operational monitoring are verified.
 
+## Contributing
+
+Contributions are welcome. Please read [CONTRIBUTING.md](./CONTRIBUTING.md) before opening an issue or pull request. Use the bug report template for reproducible problems. For security concerns, follow [SECURITY.md](./SECURITY.md) and do not post vulnerabilities publicly.
+
 ## License
 
-MIT. See [LICENSE](./LICENSE).
+NEXUS AI is released under the MIT License. You may use, copy, modify, distribute, and sublicense the project subject to the license terms. See [LICENSE](./LICENSE).
