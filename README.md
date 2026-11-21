@@ -14,6 +14,7 @@
 - Local conversation history for signed-out users.
 - Per-account conversation history sync when Supabase is configured and the user is signed in.
 - Projects workspace with create, search, pause/resume, and delete actions.
+- Per-project memory notes with create, edit, delete, and account-isolated cloud storage.
 - Per-account cloud project sync, with account-specific browser caches.
 - Supabase email/password sign-up, sign-in, sign-out, SSR session helpers, and auth callback route.
 - Read-only GitHub Lab for public repository metadata and README inspection.
@@ -62,7 +63,7 @@
 
    Never commit `.env.local`, expose provider keys in client code, or place a Supabase service-role key in a `NEXT_PUBLIC_*` variable.
 
-5. Apply both migrations in order: `supabase/migrations/0001_initial_schema.sql` and `supabase/migrations/0002_stable_message_order.sql`, using the Supabase SQL Editor or Supabase CLI.
+5. Apply all three migrations in order: `supabase/migrations/0001_initial_schema.sql`, `supabase/migrations/0002_stable_message_order.sql`, and `supabase/migrations/0003_project_memories.sql`, using the Supabase SQL Editor or Supabase CLI.
 
 6. In Supabase Auth, set the site URL and allowed redirect URLs. Include `http://localhost:3000/auth/callback` for local development and your production origin plus `/auth/callback` after deployment.
 
@@ -86,9 +87,9 @@ The API requires signed-in Supabase users in production, applies shared per-user
 
 ## Supabase data and account isolation
 
-Apply both migrations in order: `supabase/migrations/0001_initial_schema.sql` and `supabase/migrations/0002_stable_message_order.sql`. They create profiles, projects, conversations, and ordered messages with Row Level Security policies tied to the authenticated user.
+Apply both migrations in order: `supabase/migrations/0001_initial_schema.sql` and `supabase/migrations/0002_stable_message_order.sql`. They create profiles, projects, conversations, ordered messages, and project memory notes with Row Level Security policies tied to the authenticated user.
 
-- Signed-in users load and save conversations and projects to their own Supabase records.
+- Signed-in users load and save conversations, projects, and project memory notes to their own Supabase records.
 - Signed-in browser caches are keyed by account.
 - Signed-out conversations and projects remain local to the current browser.
 - Existing signed-out local history is not automatically copied into an account. This avoids accidentally transferring one person's device history into another account.
@@ -119,13 +120,13 @@ npm run lint
 npm run build
 ```
 
-GitHub Actions passed `npm run typecheck`, `npm run lint`, and `npm run build` on the current implementation. `npm audit` reported zero known vulnerabilities in that verified dependency tree.
+Run these checks against the exact commit you intend to use. Results depend on the installed dependency tree and current toolchain.
 
 ## Roadmap
 
 1. **Foundation:** responsive UI, language support, AI Hub, server-side provider adapter.
 2. **AI Hub:** model selection, conversation search/export, usage controls.
-3. **Project Memory:** project notes/files, per-project instructions, context retrieval.
+3. **Project Memory:** per-project notes are implemented; file attachments, per-project AI instructions, and automatic context retrieval remain planned.
 4. **GitHub Lab:** secure private-repository connection, source browsing, code review, branch-based patches, and pull requests with user approval.
 5. **Automation:** multi-step workflows, approval checkpoints, activity history, and rollback.
 6. **Release readiness:** shared rate limits, cost controls, security review, monitoring, and hosted deployment.
@@ -133,7 +134,7 @@ GitHub Actions passed `npm run typecheck`, `npm run lint`, and `npm run build` o
 ## Safety and privacy
 
 - Chat prompts are sent to the AI provider configured by the deployment to generate responses.
-- Signed-in conversation/project data is stored in the configured Supabase project; signed-out data remains in the current browser storage.
+- Signed-in conversation, project, and project-memory data is stored in the configured Supabase project; signed-out data remains in the current browser storage.
 - Keep provider and service-role keys on the server only.
 - Do not commit secrets, personal access tokens, or private credentials.
 - Review AI-generated output before using it in important systems.
