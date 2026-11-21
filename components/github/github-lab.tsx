@@ -65,14 +65,21 @@ export default function GitHubLab({ isArabic }: { isArabic: boolean }) {
       const repoData = (await response.json()) as Repository;
       setRepository(repoData);
 
-      const readmeResponse = await fetch(`${base}/readme`, { headers: { Accept: "application/vnd.github+json" } });
+      const [readmeResponse, commitsResponse] = await Promise.all([
+        fetch(`${base}/readme`, { headers, signal: controller.signal }),
+        fetch(`${base}/commits?per_page=5`, { headers, signal: controller.signal }),
+      ]);
       if (readmeResponse.ok) {
         const file = (await readmeResponse.json()) as { content?: string; encoding?: string };
         if (file.content && file.encoding === "base64") {
           const binary = atob(file.content.replace(/\s/g, ""));
           const bytes = Uint8Array.from(binary, (character) => character.charCodeAt(0));
           setReadme(new TextDecoder().decode(bytes).slice(0, 18000));
-        }
+        } else setReadmeMissing(true);
+      } else setReadmeMissing(true);
+      if (commitsResponse.ok) {
+        const data = (await commitsResponse.json()) as Commit[];
+        if (Array.isArray(data)) setCommits(data.slice(0, 5));
       }
     } catch (cause) {
       setError(cause instanceof Error && cause.name === "AbortError"
