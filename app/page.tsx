@@ -7,9 +7,10 @@ import type { ChatMessage } from "@/lib/ai/types";
 import ProjectWorkspace from "@/components/projects/project-workspace";
 import AuthPanel from "@/components/auth/auth-panel";
 import GitHubLab from "@/components/github/github-lab";
+import AutomationLab from "@/components/automation/automation-lab";
 import { createClient } from "@/lib/supabase/client";
 
-type Section = "hub" | "projects" | "github" | "settings";
+type Section = "hub" | "projects" | "github" | "automation" | "settings";
 type SavedConversation = { id: string; title: string; messages: ChatMessage[]; updatedAt: number };
 
 function isSavedConversation(value: unknown): value is SavedConversation {
@@ -32,6 +33,7 @@ const labels: Record<Section, { en: string; ar: string; icon: string }> = {
   hub: { en: "AI Hub", ar: "مركز الذكاء", icon: "✳" },
   projects: { en: "Projects", ar: "المشاريع", icon: "▦" },
   github: { en: "GitHub Lab", ar: "مختبر GitHub", icon: "⌘" },
+  automation: { en: "Automation", ar: "الأتمتة", icon: "↻" },
   settings: { en: "Settings", ar: "الإعدادات", icon: "⚙" },
 };
 
@@ -443,6 +445,8 @@ export default function Home() {
           </div>
         ) : section === "github" ? (
           <GitHubLab isArabic={isArabic} />
+        ) : section === "automation" ? (
+          <AutomationLab isArabic={isArabic} />
         ) : section === "hub" ? (
           <div className="hub-layout">
             <div className="page-heading">
