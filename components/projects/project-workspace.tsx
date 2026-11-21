@@ -28,7 +28,7 @@ function isProject(value: unknown): value is Project {
     typeof item.updatedAt === "number";
 }
 
-export default function ProjectWorkspace({ isArabic, onBack }: { isArabic: boolean; onBack: () => void }) {
+export default function ProjectWorkspace({ isArabic, onBack, onUseMemory }: { isArabic: boolean; onBack: () => void; onUseMemory: (projectName: string, notes: { title: string; content: string }[]) => void }) {
   const [projects, setProjects] = useState<Project[]>([]);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -222,6 +222,7 @@ export default function ProjectWorkspace({ isArabic, onBack }: { isArabic: boole
       userId={userId}
       isArabic={isArabic}
       onBack={() => setSelectedProjectId(null)}
+      onUseInChat={onUseMemory}
     />;
   }
 
