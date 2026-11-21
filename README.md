@@ -18,6 +18,7 @@
 - Per-account cloud project sync, with account-specific browser caches.
 - Supabase email/password sign-up, sign-in, sign-out, SSR session helpers, and auth callback route.
 - Read-only GitHub Lab for public repository metadata, topics, README preview, and recent commit history.
+- Reusable AI workflows with manual execution, saved prompts, and a local run history; background scheduling is not yet connected.
 - No external font download on the critical page-load path.
 
 ## Requirements
@@ -128,7 +129,7 @@ Run these checks against the exact commit you intend to use. Results depend on t
 2. **AI Hub:** model selection, conversation search/export, usage controls.
 3. **Project Memory:** per-project notes and explicit memory-to-chat context injection are implemented; file attachments, per-project AI instructions, and automatic context retrieval remain planned.
 4. **GitHub Lab:** secure private-repository connection, source browsing, code review, branch-based patches, and pull requests with user approval.
-5. **Automation:** multi-step workflows, approval checkpoints, activity history, and rollback.
+5. **Automation:** reusable prompt workflows with manual execution and local run history are implemented. Background scheduling, multi-step orchestration, approval checkpoints, and rollback remain planned.
 6. **Release readiness:** shared rate limits, cost controls, security review, monitoring, and hosted deployment.
 
 ## Safety and privacy
