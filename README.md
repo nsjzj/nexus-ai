@@ -87,7 +87,7 @@ The API requires signed-in Supabase users in production, applies shared per-user
 
 ## Supabase data and account isolation
 
-Apply both migrations in order: `supabase/migrations/0001_initial_schema.sql` and `supabase/migrations/0002_stable_message_order.sql`. They create profiles, projects, conversations, ordered messages, and project memory notes with Row Level Security policies tied to the authenticated user.
+Apply all three migrations in order: `supabase/migrations/0001_initial_schema.sql`, `supabase/migrations/0002_stable_message_order.sql`, and `supabase/migrations/0003_project_memories.sql`. They create profiles, projects, conversations, ordered messages, and project memory notes with Row Level Security policies tied to the authenticated user.
 
 - Signed-in users load and save conversations, projects, and project memory notes to their own Supabase records.
 - Signed-in browser caches are keyed by account.
